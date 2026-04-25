@@ -13,6 +13,7 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    dos2unix \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -25,8 +26,8 @@ COPY . .
 # Create instance directory for SQLite
 RUN mkdir -p instance && chmod 777 instance
 
-# Make entrypoint executable
-RUN chmod +x entrypoint.sh
+# Make entrypoint executable and fix line endings
+RUN dos2unix entrypoint.sh && chmod +x entrypoint.sh
 
 # Expose port
 EXPOSE 5000
