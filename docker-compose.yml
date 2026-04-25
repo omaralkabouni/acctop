@@ -12,7 +12,7 @@ services:
       - erp_uploads:/app/app/static/uploads
     environment:
       - SECRET_KEY=your-super-secret-key-change-this
-      - DATABASE_URL=sqlite:///instance/erp_top.db
+      - DATABASE_URL=sqlite:////app/instance/erp_top.db
       - GUNICORN_TIMEOUT=120
     logging:
       driver: "json-file"
