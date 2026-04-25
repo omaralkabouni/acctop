@@ -131,7 +131,21 @@ def create():
             entry = _create_invoice_journal(invoice)
             if entry:
                 invoice.journal_entry_id = entry.id
+                
+            # Update Inventory (Stock OUT)
+            for line in invoice.lines:
+                if line.product_id:
+                    prod = Product.query.get(line.product_id)
+                    prod.stock_qty = float(prod.stock_qty) - float(line.qty)
+                    
+                    db.session.add(InventoryMovement(
+                        product_id=line.product_id, type='out', qty=line.qty,
+                        unit_cost=prod.cost_price, reference=invoice.number,
+                        notes=f'مبيعات: {invoice.party.display_name if invoice.party else "عميل نقدي"}',
+                        created_by=current_user.id
+                    ))
             
+
             paid_amount = request.form.get('paid_amount', 0, type=float)
             if paid_amount > 0:
                 invoice.paid_amount = paid_amount

@@ -83,8 +83,16 @@ def checkout():
         line.recalculate()
         db.session.add(line)
         
-        # Simple stock reduction
+        # Simple stock reduction and tracking
         product.stock_qty = float(product.stock_qty) - float(item['qty'])
+        
+        from ...models.product import InventoryMovement
+        db.session.add(InventoryMovement(
+            product_id=product.id, type='out', qty=float(item['qty']),
+            unit_cost=product.cost_price, reference=invoice.number,
+            notes='مبيعات POS',
+            created_by=current_user.id
+        ))
 
     invoice.recalculate()
     db.session.flush()
