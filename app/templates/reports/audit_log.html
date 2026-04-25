@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+    <div>
+        <h2>سجل نشاطات المستخدمين</h2>
+        <p class="text-muted">متابعة كافة العمليات التي قام بها الموظفون داخل النظام</p>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 24px">
+    <div class="card-body">
+        <form method="GET" class="form-row" style="align-items: flex-end;">
+            <div class="form-group" style="flex:1">
+                <label class="form-label">الموظف / المستخدم</label>
+                <select name="user_id" class="form-control searchable-select">
+                    <option value="">الكل</option>
+                    {% for u in users %}
+                    <option value="{{ u.id }}" {% if selected_user == u.id %}selected{% endif %}>{{ u.full_name }} ({{ u.username }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary" style="height: 42px;">
+                    <span class="material-symbols-outlined">filter_list</span> فلترة
+                </button>
+            </div>
+            {% if selected_user %}
+            <div class="form-group">
+                <a href="{{ url_for('reports.audit_log') }}" class="btn btn-secondary" style="height: 42px;">إلغاء</a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>التاريخ والوقت</th>
+                    <th>الموظف</th>
+                    <th>العملية</th>
+                    <th>العنصر</th>
+                    <th>رقم العنصر</th>
+                    <th>عنوان IP</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in pagination.items %}
+                <tr>
+                    <td class="num">{{ log.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        {% if log.user_id %}
+                            <div style="display:flex; align-items:center; gap:8px">
+                                <span class="material-symbols-outlined" style="font-size:18px; color:var(--primary)">person</span>
+                                {{ log.user.full_name if log.user else 'غير معروف' }}
+                            </div>
+                        {% else %}
+                            <span class="text-muted">نظام</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if log.action == 'create' %}
+                            <span class="badge" style="background:var(--success-bg); color:var(--success)">إنشاء</span>
+                        {% elif log.action == 'update' %}
+                            <span class="badge" style="background:var(--info-bg); color:var(--info)">تحديث</span>
+                        {% elif log.action == 'delete' %}
+                            <span class="badge" style="background:var(--error-bg); color:var(--error)">حذف</span>
+                        {% elif log.action == 'login' %}
+                            <span class="badge" style="background:var(--secondary-container); color:var(--primary-dark)">تسجيل دخول</span>
+                        {% else %}
+                            <span class="badge">{{ log.action_ar }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ log.entity }}</td>
+                    <td class="num">
+                        {% if log.entity_id %}
+                            #{{ log.entity_id }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="num text-muted" style="font-size:12px">{{ log.ip_address or '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--outline)">
+                        <span class="material-symbols-outlined" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5">history</span>
+                        <p>لا توجد نشاطات مسجلة</p>
+                    </td>
+                </tr>
+                {% endendfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if pagination.pages > 1 %}
+<div class="pagination" style="margin-top:20px; display:flex; gap:8px; justify-content:center">
+    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+            <a href="{{ url_for('reports.audit_log', page=p, user_id=selected_user) }}" class="btn {% if p == pagination.page %}btn-primary{% else %}btn-secondary{% endif %} btn-sm num">{{ p }}</a>
+        {% else %}
+            <span style="color:var(--outline)">...</span>
+        {% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

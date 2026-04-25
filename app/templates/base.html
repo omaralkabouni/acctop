@@ -103,6 +103,9 @@
 
       {% if current_user.is_admin() %}
       <span class="nav-section-label" style="margin-top:12px">الإدارة</span>
+      <a href="{{ url_for('reports.audit_log') }}" class="nav-link {% if request.endpoint == 'reports.audit_log' %}active{% endif %}">
+        <span class="material-symbols-outlined">history</span> سجل النشاطات
+      </a>
       <a href="{{ url_for('auth.users') }}" class="nav-link {% if 'auth' in request.endpoint and request.endpoint != 'auth.profile' %}active{% endif %}">
         <span class="material-symbols-outlined">manage_accounts</span> المستخدمون
       </a>

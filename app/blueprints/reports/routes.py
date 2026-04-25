@@ -12,8 +12,11 @@ from ...models.account import Account
 from ...models.transaction import JournalEntry, JournalLine
 from ...models.party import Party
 from ...models.product import Product, InventoryMovement
+from ...models.audit import AuditLog
+from ...models.user import User
 from ...utils.helpers import get_date_range
 from ...utils.export import export_to_excel
+from ...utils.decorators import role_required
 
 
 @reports_bp.route('/')
@@ -338,3 +341,24 @@ def export_profit_loss():
     data.append(['صافي الربح', f'{net_profit:,.2f}'])
 
     return export_to_excel(data, headers, sheet_name='P&L', filename_prefix='profit_loss')
+
+@reports_bp.route('/audit-log')
+@login_required
+@role_required('admin')
+def audit_log():
+    page = request.args.get('page', 1, type=int)
+    user_id = request.args.get('user_id', type=int)
+    
+    query = AuditLog.query.order_by(AuditLog.timestamp.desc())
+    
+    if user_id:
+        query = query.filter(AuditLog.user_id == user_id)
+        
+    pagination = query.paginate(page=page, per_page=50, error_out=False)
+    users = User.query.filter_by(is_active=True).all()
+    
+    return render_template('reports/audit_log.html',
+                           title='سجل نشاطات المستخدمين',
+                           pagination=pagination,
+                           users=users,
+                           selected_user=user_id)
