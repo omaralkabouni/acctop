@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+  <div>
+    <h2>{{ party.display_name }}</h2>
+    <p class="text-muted">{{ party.type_ar }} — {{ party.email or '' }} {{ party.phone or '' }}</p>
+  </div>
+  <div class="flex gap-2">
+    <a href="{{ url_for('parties.statement', party_id=party.id) }}" class="btn btn-primary">
+      <span class="material-symbols-outlined">analytics</span> كشف حساب
+    </a>
+    <a href="{{ url_for('parties.edit', party_id=party.id) }}" class="btn btn-secondary">تعديل</a>
+    <a href="{{ url_for('parties.index') }}" class="btn btn-ghost">العودة</a>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 2fr;gap:20px">
+  <div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h4>معلومات الاتصال</h4></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+        {% if party.phone %}<div><p class="kpi-label">الهاتف</p><p>{{ party.phone }}</p></div>{% endif %}
+        {% if party.email %}<div><p class="kpi-label">البريد</p><p>{{ party.email }}</p></div>{% endif %}
+        {% if party.address %}<div><p class="kpi-label">العنوان</p><p>{{ party.address }}</p></div>{% endif %}
+        {% if party.tax_number %}<div><p class="kpi-label">الرقم الضريبي</p><p class="num">{{ party.tax_number }}</p></div>{% endif %}
+      </div>
+    </div>
+    <div class="kpi-card {{ 'green' if party.balance >= 0 else 'red' }}">
+      <div class="kpi-label">الرصيد الحالي</div>
+      <div class="kpi-value {{ 'text-success' if party.balance >= 0 else 'text-danger' }}">{{ party.balance | currency }}</div>
+      <p style="font-size:12px;color:var(--outline);margin-top:4px">
+        {{ 'مستحق لنا' if party.balance > 0 else ('مستحق عليه' if party.balance < 0 else 'لا يوجد رصيد') }}
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h4>الفواتير</h4></div>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead><tr><th>رقم الفاتورة</th><th>التاريخ</th><th class="num">الإجمالي</th><th class="num">المدفوع</th><th>الحالة</th></tr></thead>
+        <tbody>
+          {% for inv in invoices %}
+          <tr>
+            <td><a href="{{ url_for('invoices.view', invoice_id=inv.id) }}" style="font-weight:700">{{ inv.number }}</a></td>
+            <td class="num">{{ inv.date | fdate }}</td>
+            <td class="num">{{ inv.total | currency }}</td>
+            <td class="num">{{ inv.paid_amount | currency }}</td>
+            <td><span class="badge badge-{{ inv.status_color }}">{{ inv.status_ar }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" style="text-align:center;padding:20px;color:var(--outline)">لا توجد فواتير</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+  <div>
+    <h2>إدارة المستخدمين</h2>
+    <p class="text-muted">إنشاء وتعديل وحذف المستخدمين وتعيين الأدوار</p>
+  </div>
+  <a href="{{ url_for('auth.create_user') }}" class="btn btn-primary">
+    <span class="material-symbols-outlined">person_add</span> مستخدم جديد
+  </a>
+</div>
+
+<div class="card">
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr>
+        <th>#</th><th>الاسم</th><th>المستخدم</th><th>البريد</th><th>الدور</th><th>الحالة</th><th>آخر دخول</th><th>إجراءات</th>
+      </tr></thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td class="num">{{ u.id }}</td>
+          <td><strong>{{ u.full_name }}</strong></td>
+          <td>{{ u.username }}</td>
+          <td>{{ u.email }}</td>
+          <td><span class="badge badge-blue">{{ u.role.name_ar }}</span></td>
+          <td>
+            {% if u.is_active %}<span class="badge badge-green">نشط</span>
+            {% else %}<span class="badge badge-gray">معطّل</span>{% endif %}
+          </td>
+          <td class="num">{{ u.last_login | fdate if u.last_login else '—' }}</td>
+          <td>
+            <div class="flex gap-2">
+              <a href="{{ url_for('auth.edit_user', user_id=u.id) }}" class="btn btn-sm btn-secondary">تعديل</a>
+              {% if u.id != current_user.id %}
+              <form method="POST" action="{{ url_for('auth.delete_user', user_id=u.id) }}" style="display:inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button class="btn btn-sm btn-danger" data-confirm="حذف المستخدم {{ u.full_name }}؟">حذف</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--outline)">لا يوجد مستخدمون</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

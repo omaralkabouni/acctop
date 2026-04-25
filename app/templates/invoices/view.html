@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+  <div>
+    <h2>فاتورة رقم {{ invoice.number }}</h2>
+    <p class="text-muted">{{ invoice.date | fdate }} — {{ invoice.party.display_name if invoice.party else '' }}</p>
+  </div>
+  <div class="flex gap-2">
+    <a href="{{ url_for('invoices.print_invoice', invoice_id=invoice.id, layout='a4') }}" target="_blank" class="btn btn-secondary">
+      <span class="material-symbols-outlined">print</span> طباعة A4
+    </a>
+    <a href="{{ url_for('invoices.print_invoice', invoice_id=invoice.id, layout='pos') }}" target="_blank" class="btn btn-secondary">
+      <span class="material-symbols-outlined">receipt</span> طباعة إيصال 72mm
+    </a>
+    {% if invoice.status != 'paid' %}
+    <a href="{{ url_for('invoices.edit', invoice_id=invoice.id) }}" class="btn btn-secondary">تعديل</a>
+    {% endif %}
+    {% if current_user.is_admin() %}
+    <form method="POST" action="{{ url_for('invoices.delete', invoice_id=invoice.id) }}" style="display:inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <button class="btn btn-danger" data-confirm="حذف الفاتورة {{ invoice.number }}؟">حذف</button>
+    </form>
+    {% endif %}
+    <a href="{{ url_for('invoices.index') }}" class="btn btn-ghost">العودة</a>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:20px">
+  <div>
+    <!-- Invoice Header -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-body">
+        <div class="form-row">
+          <div><p class="kpi-label">العميل</p><p style="font-weight:700">{{ invoice.party.display_name if invoice.party else '—' }}</p><p style="font-size:13px;color:var(--outline)">{{ invoice.party.email or '' }}</p><p style="font-size:13px;color:var(--outline)">{{ invoice.party.phone or '' }}</p></div>
+          <div><p class="kpi-label">رقم الفاتورة</p><p style="font-weight:700;font-family:'Inter'">{{ invoice.number }}</p><p class="kpi-label" style="margin-top:12px">التاريخ</p><p style="font-family:'Inter'">{{ invoice.date | fdate }}</p>{% if invoice.due_date %}<p class="kpi-label" style="margin-top:8px">الاستحقاق</p><p style="font-family:'Inter'">{{ invoice.due_date | fdate }}</p>{% endif %}</div>
+          <div><p class="kpi-label">الحالة</p><span class="badge badge-{{ invoice.status_color }}" style="font-size:14px">{{ invoice.status_ar }}</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- Lines -->
+    <div class="card">
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead><tr><th>#</th><th>الوصف</th><th class="num">الكمية</th><th class="num">السعر</th><th class="num">خصم %</th><th class="num">الإجمالي</th></tr></thead>
+          <tbody>
+            {% for line in invoice.lines %}
+            <tr>
+              <td class="num">{{ loop.index }}</td>
+              <td>{{ line.description }}</td>
+              <td class="num">{{ line.qty }}</td>
+              <td class="num">{{ line.unit_price | currency }}</td>
+              <td class="num">{{ line.discount_pct }}%</td>
+              <td class="num" style="font-weight:700">{{ line.total | currency }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer">
+        <div class="invoice-summary" style="max-width:300px;margin-right:auto">
+          <div class="summary-row"><span>المجموع الفرعي</span><span class="num">{{ invoice.subtotal | currency }}</span></div>
+          {% if invoice.discount_amount > 0 %}<div class="summary-row"><span>الخصم ({{ invoice.discount_pct }}%)</span><span class="num">- {{ invoice.discount_amount | currency }}</span></div>{% endif %}
+          {% if invoice.tax_amount > 0 %}<div class="summary-row"><span>ضريبة القيمة المضافة ({{ invoice.tax_rate }}%)</span><span class="num">{{ invoice.tax_amount | currency }}</span></div>{% endif %}
+          <div class="summary-row total"><span>الإجمالي</span><span class="num">{{ invoice.total | currency }}</span></div>
+          <div class="summary-row"><span>المدفوع</span><span class="num" style="color:var(--secondary)">{{ invoice.paid_amount | currency }}</span></div>
+          <div class="summary-row total" style="color:{{ 'var(--error)' if invoice.balance_due > 0 else 'var(--secondary)' }}"><span>المتبقي</span><span class="num">{{ invoice.balance_due | currency }}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar: Payment -->
+  <div>
+    {% if invoice.status != 'paid' and invoice.status != 'draft' %}
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h4>تسجيل دفعة</h4></div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('invoices.record_payment', invoice_id=invoice.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <div class="form-group">
+            <label class="form-label">المبلغ المدفوع</label>
+            <input type="number" name="amount" class="form-control num" value="{{ invoice.balance_due | float }}" min="0.01" step="any" required/>
+          </div>
+          <button type="submit" class="btn btn-primary w-full" style="justify-content:center">
+            <span class="material-symbols-outlined">payments</span> تسجيل الدفعة
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+    {% if invoice.notes %}
+    <div class="card">
+      <div class="card-header"><h4>ملاحظات</h4></div>
+      <div class="card-body"><p style="font-size:14px">{{ invoice.notes }}</p></div>
+    </div>
+    {% endif %}
+    {% if invoice.journal_entry %}
+    <div class="card" style="margin-top:16px">
+      <div class="card-header"><h4>القيد المحاسبي</h4></div>
+      <div class="card-body">
+        <a href="{{ url_for('accounts.view_journal_entry', entry_id=invoice.journal_entry.id) }}" class="btn btn-ghost">{{ invoice.journal_entry.reference }}</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'print_base.html' if request.args.get('print') else 'base.html' %}
+{% block content %}
+<div class="{{ 'print-doc layout-a4' if request.args.get('print') }}">
+<div class="page-header flex-between">
+  <div>
+    <h2>تقرير الربح والخسارة</h2>
+    <p class="text-muted">{{ start_date | fdate }} — {{ end_date | fdate }}</p>
+  </div>
+  <div class="flex gap-2 no-print">
+    <div style="display:flex;border:1px solid var(--outline-var);border-radius:var(--radius);overflow:hidden">
+      {% for p,label in [('day','يومي'),('week','أسبوعي'),('month','شهري'),('year','سنوي')] %}
+      <a href="{{ url_for('reports.profit_loss', period=p) }}" class="btn btn-sm {{ 'btn-primary' if period==p else 'btn-ghost' }}" style="border-radius:0">{{ label }}</a>
+      {% endfor %}
+    </div>
+    <a href="{{ url_for('reports.profit_loss', period=period, print=1) }}" target="_blank" class="btn btn-secondary btn-sm">
+      <span class="material-symbols-outlined">print</span> طباعة
+    </a>
+    <a href="{{ url_for('reports.export_profit_loss', period=period) }}" class="btn btn-secondary btn-sm">
+      <span class="material-symbols-outlined">download</span> Excel
+    </a>
+  </div>
+</div>
+
+<div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+  <div class="kpi-card green">
+    <div class="kpi-top"><div class="kpi-icon green"><span class="material-symbols-outlined">trending_up</span></div></div>
+    <p class="kpi-label">إجمالي الإيرادات</p>
+    <div class="kpi-value">{{ revenue | currency }}</div>
+  </div>
+  <div class="kpi-card red">
+    <div class="kpi-top"><div class="kpi-icon red"><span class="material-symbols-outlined">trending_down</span></div></div>
+    <p class="kpi-label">إجمالي المصروفات</p>
+    <div class="kpi-value">{{ total_expenses | currency }}</div>
+  </div>
+  <div class="kpi-card {{ 'green' if net_profit >= 0 else 'red' }}">
+    <div class="kpi-top"><div class="kpi-icon {{ 'green' if net_profit >= 0 else 'red' }}"><span class="material-symbols-outlined">account_balance_wallet</span></div>
+      <span class="kpi-badge {{ 'up' if profit_margin >= 0 else 'down' }}">{{ '%.1f'|format(profit_margin) }}%</span>
+    </div>
+    <p class="kpi-label">صافي الربح</p>
+    <div class="kpi-value {{ 'text-success' if net_profit >= 0 else 'text-danger' }}">{{ net_profit | currency }}</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:20px">
+  <div class="card">
+    <div class="card-header"><h4>المصروفات حسب الفئة</h4></div>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead><tr><th>الفئة</th><th class="num">المبلغ</th><th>النسبة</th></tr></thead>
+        <tbody>
+          {% for cat, amt in expense_by_cat %}
+          {% if amt %}
+          <tr>
+            <td>{{ cat }}</td>
+            <td class="num" style="font-weight:700">{{ amt | currency }}</td>
+            <td>
+              {% set pct = (amt / total_expenses * 100) if total_expenses > 0 else 0 %}
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="flex:1;height:6px;background:var(--surface-high);border-radius:10px;overflow:hidden">
+                  <div style="width:{{ pct }}%;height:100%;background:var(--secondary-light);border-radius:10px"></div>
+                </div>
+                <span class="num" style="font-size:12px;color:var(--outline)">{{ '%.1f'|format(pct) }}%</span>
+              </div>
+            </td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><h4>الإيرادات</h4></div>
+      <div class="card-body">
+        <p class="kpi-label">إجمالي الفواتير المُصدرة</p>
+        <p class="kpi-value">{{ total_invoiced | currency }}</p>
+        <div class="divider"></div>
+        <p class="kpi-label">المحصّل فعلياً</p>
+        <p class="kpi-value text-success">{{ revenue | currency }}</p>
+      </div>
+    </div>
+    <div class="card" style="background:var(--primary);color:#fff">
+      <div class="card-body">
+        <p style="font-size:14px;opacity:0.7;margin-bottom:8px">هامش الربح</p>
+        <p style="font-size:32px;font-weight:800;font-family:'Inter'">{{ '%.1f'|format(profit_margin) }}%</p>
+        <p style="font-size:12px;opacity:0.6;margin-top:4px">{{ start_date | fdate }} — {{ end_date | fdate }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

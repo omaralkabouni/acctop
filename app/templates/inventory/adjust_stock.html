@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+  <div><h2>تسوية مخزون — {{ product.name_ar or product.name }}</h2>
+  <p class="text-muted">الكمية الحالية: <strong class="num">{{ product.stock_qty }} {{ product.unit }}</strong></p></div>
+  <a href="{{ url_for('inventory.product_movements', product_id=product.id) }}" class="btn btn-secondary">العودة</a>
+</div>
+<div class="card" style="max-width:420px">
+  <div class="card-body">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="form-group">
+        <label class="form-label">نوع الحركة *</label>
+        <select name="type" class="form-control" required>
+          <option value="in">وارد (استلام)</option>
+          <option value="out">صادر (صرف)</option>
+          <option value="adjustment">تسوية (ضبط الكمية)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">الكمية *</label>
+        <input type="number" name="qty" class="form-control num" min="0.001" step="any" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">سعر الوحدة</label>
+        <input type="number" name="unit_cost" class="form-control num" value="{{ product.cost_price | float }}" min="0" step="any"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ملاحظات / المرجع</label>
+        <input type="text" name="notes" class="form-control" placeholder="سبب التسوية..."/>
+      </div>
+      <div class="flex gap-2"><button type="submit" class="btn btn-primary"><span class="material-symbols-outlined">save</span> تأكيد</button><a href="{{ url_for('inventory.index') }}" class="btn btn-secondary">إلغاء</a></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

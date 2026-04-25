@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+  <div>
+    <h2>النسخ الاحتياطي والاستعادة</h2>
+    <p class="text-muted">إدارة نسخ قاعدة البيانات وتأمين البيانات</p>
+  </div>
+  <a href="{{ url_for('backups.run_backup') }}" class="btn btn-primary">
+    <span class="material-symbols-outlined">backup</span> إنشاء نسخة احتياطية الآن
+  </a>
+</div>
+
+<div class="card" style="margin-bottom:20px">
+  <div class="card-body">
+    <h4>رفع نسخة احتياطية (.db)</h4>
+    <form method="POST" action="{{ url_for('backups.upload') }}" enctype="multipart/form-data" class="flex gap-2" style="margin-top:10px">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <input type="file" name="backup_file" class="form-control" accept=".db" required>
+      <button type="submit" class="btn btn-secondary">رفع واستيراد</button>
+    </form>
+  </div>
+</div>
+
+<div class="alert alert-info">
+  <span class="material-symbols-outlined">info</span>
+  <div>
+    <strong>تنبيه:</strong> يتم حذف النسخ الاحتياطية تلقائياً بعد مرور 7 أيام. 
+    يتم أيضاً إرسال النسخة تلقائياً إلى n8n (تلغرام) إذا كان الرابط مفعلاً في الإعدادات.
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>اسم الملف</th>
+          <th>تاريخ الإنشاء</th>
+          <th>الحجم</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in backups %}
+        <tr>
+          <td><span class="font-bold">{{ b.filename }}</span></td>
+          <td class="num">{{ b.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td class="num">{{ (b.size / 1024) | round(1) }} KB</td>
+          <td>
+            <div class="flex gap-2">
+              <a href="{{ url_for('backups.download', filename=b.filename) }}" class="btn btn-sm btn-secondary" title="تحميل">
+                <span class="material-symbols-outlined" style="font-size:18px">download</span>
+              </a>
+              <form method="POST" action="{{ url_for('backups.restore', filename=b.filename) }}" onsubmit="return confirm('تحذير: استعادة النسخة سيؤدي لاستبدال البيانات الحالية بالكامل. هل أنت متأكد؟')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button class="btn btn-sm btn-warning">استعادة</button>
+              </form>
+              <form method="POST" action="{{ url_for('backups.delete', filename=b.filename) }}" onsubmit="return confirm('حذف هذه النسخة؟')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button class="btn btn-sm btn-danger">حذف</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="4">
+            <div class="empty-state">
+              <span class="material-symbols-outlined">cloud_off</span>
+              <h3>لا توجد نسخ احتياطية حالياً</h3>
+              <p>اضغط على الزر أعلاه لإنشاء أول نسخة احتياطية.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

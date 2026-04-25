@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+  <div>
+    <h2>دليل الحسابات</h2>
+    <p class="text-muted">إدارة شجرة الحسابات وعرض الأرصدة</p>
+  </div>
+  <div class="flex gap-2">
+    <a href="{{ url_for('accounts.create_account') }}" class="btn btn-primary">
+      <span class="material-symbols-outlined">add</span> حساب جديد
+    </a>
+    <a href="{{ url_for('accounts.journal') }}" class="btn btn-secondary">
+      <span class="material-symbols-outlined">book</span> دفتر الأستاذ
+    </a>
+  </div>
+</div>
+
+{% set type_labels = {'asset':'الأصول','liability':'الخصوم','equity':'حقوق الملكية','revenue':'الإيرادات','expense':'المصروفات'} %}
+{% set type_colors = {'asset':'blue','liability':'red','equity':'purple','revenue':'green','expense':'yellow'} %}
+
+{% for type_key in ['asset','liability','equity','revenue','expense'] %}
+{% set type_accounts = accounts | selectattr('type','eq',type_key) | list %}
+{% if type_accounts or True %}
+<div class="card" style="margin-bottom:16px">
+  <div class="card-header">
+    <h4 style="display:flex;align-items:center;gap:8px">
+      <span class="badge badge-{{ type_colors[type_key] }}">{{ type_labels[type_key] }}</span>
+    </h4>
+    <span class="num" style="font-weight:700">
+      {{ namespace(t=0) }}
+    </span>
+  </div>
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>الكود</th><th>اسم الحساب</th><th>النوع</th><th class="num">مدين</th><th class="num">دائن</th><th class="num">الرصيد</th><th>إجراءات</th></tr></thead>
+      <tbody>
+        {% for acc in accounts %}
+        {% if acc.type == type_key %}
+        <tr>
+          <td><strong class="num">{{ acc.code }}</strong></td>
+          <td>
+            {% if acc.parent_id %}<span style="margin-right:16px;color:var(--outline)">↳</span>{% endif %}
+            {{ acc.name_ar }}
+            {% if acc.name_en %}<span style="font-size:11px;color:var(--outline)"> ({{ acc.name_en }})</span>{% endif %}
+          </td>
+          <td><span class="badge badge-{{ type_colors[acc.type] }}">{{ acc.type_ar }}</span></td>
+          <td class="num">{{ acc.total_debit | currency }}</td>
+          <td class="num">{{ acc.total_credit | currency }}</td>
+          <td class="num" style="font-weight:700;color:{{ 'var(--secondary)' if acc.balance >= 0 else 'var(--error)' }}">
+            {{ acc.balance | currency }}
+          </td>
+          <td>
+            <a href="{{ url_for('accounts.edit_account', account_id=acc.id) }}" class="btn btn-sm btn-secondary">تعديل</a>
+          </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+{% endblock %}

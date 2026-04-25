@@ -1,0 +1,45 @@
+{% extends 'print_base.html' if request.args.get('print') else 'base.html' %}
+{% block content %}
+<div class="{{ 'print-doc layout-a4' if request.args.get('print') }}">
+<div class="page-header flex-between no-print">
+  <div><h2>تقرير المخزون</h2><p class="text-muted">إجمالي قيمة المخزون: <strong>{{ total_value | currency }}</strong></p></div>
+  <div class="flex gap-2">
+    <a href="{{ url_for('reports.inventory_report', print=1) }}" target="_blank" class="btn btn-secondary">
+      <span class="material-symbols-outlined">print</span> طباعة
+    </a>
+    <a href="{{ url_for('reports.inventory_report', export=1) }}" class="btn btn-secondary">
+      <span class="material-symbols-outlined">download</span> تصدير Excel
+    </a>
+  </div>
+</div>
+{% if low_stock %}
+<div class="alert alert-warning"><span class="material-symbols-outlined" style="font-size:18px;flex-shrink:0">warning</span>يوجد {{ low_stock | length }} منتج بمخزون منخفض</div>
+{% endif %}
+<div class="card">
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>المنتج</th><th>الفئة</th><th class="num">الكمية</th><th class="num">الحد الأدنى</th><th class="num">سعر الشراء</th><th class="num">سعر البيع</th><th class="num">القيمة الإجمالية</th><th>الحالة</th></tr></thead>
+      <tbody>
+        {% for p in products %}
+        <tr>
+          <td><a href="{{ url_for('inventory.product_movements', product_id=p.id) }}" style="font-weight:700">{{ p.name_ar or p.name }}</a></td>
+          <td>{{ p.category or '—' }}</td>
+          <td class="num">{{ p.stock_qty }} {{ p.unit }}</td>
+          <td class="num">{{ p.min_stock }}</td>
+          <td class="num">{{ p.cost_price | currency }}</td>
+          <td class="num">{{ p.unit_price | currency }}</td>
+          <td class="num" style="font-weight:700">{{ p.stock_value | currency }}</td>
+          <td>
+            {% if p.is_low_stock %}<span class="badge badge-red">منخفض</span>
+            {% else %}<span class="badge badge-green">جيد</span>{% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--outline)">لا توجد منتجات</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+{% endblock %}

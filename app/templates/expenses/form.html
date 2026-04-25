@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+  <div><h2>{{ title }}</h2></div>
+  <a href="{{ url_for('expenses.index') }}" class="btn btn-secondary"><span class="material-symbols-outlined">arrow_forward</span> العودة</a>
+</div>
+<div class="card" style="max-width:600px">
+  <div class="card-body">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">المبلغ *</label>
+          <input type="number" name="amount" class="form-control num" value="{{ expense.amount | float if expense else '' }}" min="0.01" step="any" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">التاريخ *</label>
+          <input type="date" name="date" class="form-control" value="{{ expense.date | fdate if expense else today }}" required/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">الوصف *</label>
+        <input type="text" name="description" class="form-control" value="{{ expense.description if expense else '' }}" required/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">الفئة</label>
+          <select name="category_id" class="form-control searchable-select">
+            <option value="">-- بدون فئة --</option>
+            {% for cat in categories %}<option value="{{ cat.id }}" {{ 'selected' if expense and expense.category_id==cat.id }}>{{ cat.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">الحساب المحاسبي</label>
+          <select name="account_id" class="form-control searchable-select">
+            <option value="">-- اختر الحساب --</option>
+            {% for acc in accounts %}<option value="{{ acc.id }}" {{ 'selected' if expense and expense.account_id==acc.id }}>{{ acc.code }} — {{ acc.name_ar }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">المورد (اختياري)</label>
+          <select name="party_id" class="form-control searchable-select">
+            <option value="">-- اختر المورد --</option>
+            {% for s in suppliers %}<option value="{{ s.id }}" {{ 'selected' if expense and expense.party_id==s.id }}>{{ s.display_name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">طريقة الدفع</label>
+          <select name="payment_method" class="form-control">
+            <option value="cash" {{ 'selected' if not expense or expense.payment_method=='cash' }}>نقداً</option>
+            <option value="bank" {{ 'selected' if expense and expense.payment_method=='bank' }}>تحويل بنكي</option>
+            <option value="credit" {{ 'selected' if expense and expense.payment_method=='credit' }}>آجل</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="display:flex;gap:8px;align-items:center">
+        <input type="checkbox" name="is_paid" id="is_paid" {{ 'checked' if not expense or expense.is_paid }}/>
+        <label for="is_paid" class="form-label" style="margin:0">تم الدفع</label>
+      </div>
+      <div class="flex gap-2"><button type="submit" class="btn btn-primary"><span class="material-symbols-outlined">save</span> حفظ</button><a href="{{ url_for('expenses.index') }}" class="btn btn-secondary">إلغاء</a></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

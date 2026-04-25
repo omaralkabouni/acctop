@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  erp-top:
+    build: .
+    container_name: erp_top_app
+    restart: always
+    ports:
+      - "5566:5000"
+    volumes:
+      - erp_data:/app/instance
+      - erp_uploads:/app/app/static/uploads
+    environment:
+      - SECRET_KEY=your-super-secret-key-change-this
+      - DATABASE_URL=sqlite:///instance/erp_top.db
+
+volumes:
+  erp_data:
+  erp_uploads:

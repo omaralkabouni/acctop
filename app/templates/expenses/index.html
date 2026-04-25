@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+  <div><h2>المصروفات</h2><p class="text-muted">إجمالي المصروفات: <strong>{{ total | currency }}</strong></p></div>
+  <div class="flex gap-2">
+    <a href="{{ url_for('expenses.export_expenses') }}" class="btn btn-secondary">
+      <span class="material-symbols-outlined">download</span> تصدير Excel
+    </a>
+    <a href="{{ url_for('expenses.create') }}" class="btn btn-primary">
+      <span class="material-symbols-outlined">add</span> مصروف جديد
+    </a>
+  </div>
+</div>
+<div class="card" style="margin-bottom:16px">
+  <div class="card-body" style="padding:12px 20px">
+    <form method="GET" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <input type="text" name="q" value="{{ search }}" class="form-control" placeholder="بحث..." style="width:200px"/>
+      <select name="category_id" class="form-control" style="width:180px">
+        <option value="">كل الفئات</option>
+        {% for cat in categories %}<option value="{{ cat.id }}" {{ 'selected' if cat.id==category_id }}>{{ cat.name }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="btn btn-secondary"><span class="material-symbols-outlined">filter_list</span> تصفية</button>
+      <a href="{{ url_for('expenses.index') }}" class="btn btn-ghost">مسح</a>
+    </form>
+  </div>
+</div>
+<div class="card">
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>التاريخ</th><th>الوصف</th><th class="hide-mobile">الفئة</th><th class="hide-mobile">طريقة الدفع</th><th class="num">المبلغ</th><th>إجراءات</th></tr></thead>
+      <tbody>
+        {% for exp in expenses.items %}
+        <tr>
+          <td class="num">{{ exp.date | fdate }}</td>
+          <td>{{ exp.description }}</td>
+          <td>{% if exp.category %}<span class="badge" style="background:{{ exp.category.color }}20;color:{{ exp.category.color }}">{{ exp.category.name }}</span>{% else %}—{% endif %}</td>
+          <td>{{ exp.payment_method_ar }}</td>
+          <td class="num" style="font-weight:700;color:var(--error)">{{ exp.amount | currency }}</td>
+          <td>
+            <div class="flex gap-2">
+              <a href="{{ url_for('expenses.edit', expense_id=exp.id) }}" class="btn btn-sm btn-secondary">تعديل</a>
+              {% if current_user.is_admin() %}
+              <form method="POST" action="{{ url_for('expenses.delete', expense_id=exp.id) }}" style="display:inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button class="btn btn-sm btn-danger" data-confirm="حذف هذا المصروف؟">حذف</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6"><div class="empty-state"><span class="material-symbols-outlined">payments</span><h3>لا توجد مصروفات</h3><a href="{{ url_for('expenses.create') }}" class="btn btn-primary">إضافة مصروف</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

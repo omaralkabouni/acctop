@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="ERP TOP - نظام محاسبة متكامل"/>
+  <title>{% block title %}{{ title or 'ERP TOP' }}{% endblock %} — ERP TOP</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap"/>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo">
+        {% if sys_settings and sys_settings.company_logo %}
+          <img src="{{ url_for('static', filename=sys_settings.company_logo) }}" style="width:32px;height:32px;object-fit:contain"/>
+        {% else %}
+          <span class="material-symbols-outlined">account_balance</span>
+        {% endif %}
+      </div>
+      <div>
+        <h1>{{ sys_settings.company_name if sys_settings else 'ERP TOP' }}</h1>
+        <span>النظام المحاسبي</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">الرئيسية</span>
+      <a href="{{ url_for('dashboard.index') }}" class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+        <span class="material-symbols-outlined">dashboard</span> لوحة التحكم
+      </a>
+
+      <span class="nav-section-label" style="margin-top:12px">المحاسبة</span>
+      <a href="{{ url_for('accounts.index') }}" class="nav-link {% if 'accounts' in request.endpoint %}active{% endif %}">
+        <span class="material-symbols-outlined">account_tree</span> دليل الحسابات
+      </a>
+      <a href="{{ url_for('accounts.journal') }}" class="nav-link {% if request.endpoint == 'accounts.journal' %}active{% endif %}">
+        <span class="material-symbols-outlined">book</span> دفتر الأستاذ
+      </a>
+      <a href="{{ url_for('quotations.index') }}" class="nav-link {% if 'quotations' in request.endpoint %}active{% endif %}">
+        <span class="material-symbols-outlined">description</span> عروض الأسعار
+      </a>
+      <a href="{{ url_for('pos.index') }}" class="nav-link {{ 'active' if request.endpoint and 'pos.' in request.endpoint }}">
+        <span class="material-symbols-outlined">point_of_sale</span>
+        <span>نقطة البيع (POS)</span>
+      </a>
+      <a href="{{ url_for('invoices.index') }}" class="nav-link {{ 'active' if request.endpoint and 'invoices.' in request.endpoint }}">
+        <span class="material-symbols-outlined">receipt_long</span>
+        <span>الفواتير (مبيعات)</span>
+      </a>
+      <a href="{{ url_for('purchases.index') }}" class="nav-link {% if 'purchases' in request.endpoint %}active{% endif %}">
+        <span class="material-symbols-outlined">shopping_cart</span> المشتريات
+      </a>
+      <a href="{{ url_for('expenses.index') }}" class="nav-link {% if 'expenses' in request.endpoint %}active{% endif %}">
+        <span class="material-symbols-outlined">payments</span> المصروفات
+      </a>
+
+      <span class="nav-section-label" style="margin-top:12px">العمليات</span>
+      <a href="{{ url_for('inventory.index') }}" class="nav-link {% if 'inventory' in request.endpoint %}active{% endif %}">
+        <span class="material-symbols-outlined">inventory_2</span> المخزون
+      </a>
+      <a href="{{ url_for('parties.index') }}" class="nav-link {% if 'parties' in request.endpoint %}active{% endif %}">
+        <span class="material-symbols-outlined">people</span> العملاء والموردون
+      </a>
+      <a href="{{ url_for('vouchers.index') }}" class="nav-link {% if 'vouchers' in request.endpoint %}active{% endif %}">
+        <span class="material-symbols-outlined">receipt</span> السندات المالية
+      </a>
+      <a href="{{ url_for('woocommerce.index') }}" class="nav-link {% if 'woocommerce' in request.endpoint %}active{% endif %}">
+        <span class="material-symbols-outlined">sync</span> WooCommerce
+      </a>
+
+      <span class="nav-section-label" style="margin-top:12px">التقارير</span>
+      <a href="{{ url_for('reports.profit_loss') }}" class="nav-link {% if request.endpoint == 'reports.profit_loss' %}active{% endif %}">
+        <span class="material-symbols-outlined">analytics</span> الربح والخسارة
+      </a>
+      <a href="{{ url_for('reports.general_ledger') }}" class="nav-link {% if request.endpoint == 'reports.general_ledger' %}active{% endif %}">
+        <span class="material-symbols-outlined">menu_book</span> كشف الحساب (حسابات)
+      </a>
+      <a href="{{ url_for('reports.party_statement') }}" class="nav-link {% if request.endpoint == 'reports.party_statement' %}active{% endif %}">
+        <span class="material-symbols-outlined">contact_page</span> كشف حساب عميل/مورد
+      </a>
+      <a href="{{ url_for('reports.debt_report') }}" class="nav-link {% if request.endpoint == 'reports.debt_report' %}active{% endif %}">
+        <span class="material-symbols-outlined">account_balance_wallet</span> تقرير الديون
+      </a>
+      <a href="{{ url_for('reports.inventory_report') }}" class="nav-link {% if request.endpoint == 'reports.inventory_report' %}active{% endif %}">
+        <span class="material-symbols-outlined">bar_chart</span> تقرير المخزون
+      </a>
+
+      {% if current_user.is_admin() %}
+      <span class="nav-section-label" style="margin-top:12px">الإدارة</span>
+      <a href="{{ url_for('auth.users') }}" class="nav-link {% if 'auth' in request.endpoint and request.endpoint != 'auth.profile' %}active{% endif %}">
+        <span class="material-symbols-outlined">manage_accounts</span> المستخدمون
+      </a>
+      <a href="{{ url_for('settings.index') }}" class="nav-link {% if 'settings' in request.endpoint %}active{% endif %}">
+        <span class="material-symbols-outlined">settings</span> الإعدادات العامة
+      </a>
+      <a href="{{ url_for('backups.index') }}" class="nav-link {% if 'backups' in request.endpoint %}active{% endif %}">
+        <span class="material-symbols-outlined">cloud_sync</span> النسخ الاحتياطي
+      </a>
+      {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="{{ url_for('invoices.create') }}" class="btn-new-entry" style="text-decoration:none;margin-bottom:8px">
+        <span class="material-symbols-outlined">add</span> فاتورة جديدة
+      </a>
+      <a href="{{ url_for('auth.profile') }}" class="nav-link">
+        <span class="material-symbols-outlined">person</span> {{ current_user.full_name }}
+      </a>
+      <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color:var(--error)">
+        <span class="material-symbols-outlined">logout</span> تسجيل الخروج
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-content">
+    
+    <!-- Toast Container -->
+    <div id="toast-container" style="position:fixed; top:20px; left:20px; z-index:10000; display:flex; flex-direction:column; gap:10px"></div>
+
+    <!-- Global Confirmation Modal -->
+    <div id="global-confirm-modal" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center">
+        <div class="card" style="width:360px; padding:24px; text-align:center">
+            <div id="confirm-icon" style="width:50px; height:50px; background:var(--surface-low); color:var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px">
+                <span class="material-symbols-outlined" style="font-size:32px">help</span>
+            </div>
+            <h4 id="confirm-title" style="margin-bottom:8px">تأكيد الإجراء</h4>
+            <p id="confirm-msg" style="color:var(--outline); font-size:14px; margin-bottom:24px"></p>
+            <div style="display:flex; gap:12px">
+                <button class="btn btn-secondary flex-1" onclick="closeConfirm(false)">إلغاء</button>
+                <button class="btn btn-primary flex-1" onclick="closeConfirm(true)">تأكيد</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-right">
+        <button class="topbar-btn" id="sidebar-toggle" style="margin-left: 10px;">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="topbar-search">
+          <span class="material-symbols-outlined">search</span>
+          <input type="text" placeholder="بحث سريع..." id="global-search"/>
+        </div>
+      </div>
+      <div class="topbar-left">
+        {% block topbar_actions %}{% endblock %}
+        <div class="topbar-divider"></div>
+        <a href="{{ url_for('auth.profile') }}" class="avatar-btn" title="{{ current_user.full_name }}">
+          {{ current_user.initials }}
+        </a>
+      </div>
+    </header>
+
+    <!-- Flash messages -->
+    <div style="padding: 0 32px; margin-top: 8px;">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'success' if category == 'success' else ('error' if category == 'error' else ('warning' if category == 'warning' else 'info')) }}" data-auto-dismiss>
+            <span class="material-symbols-outlined" style="font-size:18px;flex-shrink:0">
+              {{ 'check_circle' if category == 'success' else ('error' if category == 'error' else 'info') }}
+            </span>
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endwith %}
+    </div>
+
+    <!-- Content -->
+    <div class="page-content">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+
+<script>
+  // Mobile Sidebar Toggle
+  const sidebar = document.getElementById('sidebar');
+  const toggleBtn = document.getElementById('sidebar-toggle');
+  
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sidebar.classList.toggle('open');
+    });
+  }
+
+  // Close sidebar when clicking outside
+  document.addEventListener('click', (e) => {
+    if (sidebar.classList.contains('open') && !sidebar.contains(e.target)) {
+      sidebar.classList.remove('open');
+    }
+  });
+</script>
+
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+// --- Global Toast & Confirm ---
+let confirmCallback = null;
+
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} fade-in`;
+    toast.style.cssText = 'min-width:300px; margin:0; box-shadow:var(--shadow-lg); pointer-events:auto';
+    
+    const icon = type === 'success' ? 'check_circle' : (type === 'error' ? 'error' : 'info');
+    toast.innerHTML = `
+        <span class="material-symbols-outlined" style="font-size:18px">${icon}</span>
+        <span>${message}</span>
+    `;
+    
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-20px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+function showConfirm(message, callback, title = 'تأكيد الإجراء', icon = 'help') {
+    document.getElementById('confirm-msg').innerText = message;
+    document.getElementById('confirm-title').innerText = title;
+    document.getElementById('confirm-icon').querySelector('span').innerText = icon;
+    document.getElementById('global-confirm-modal').style.display = 'flex';
+    confirmCallback = callback;
+}
+
+function closeConfirm(result) {
+    document.getElementById('global-confirm-modal').style.display = 'none';
+    if (result && confirmCallback) confirmCallback();
+    confirmCallback = null;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Convert flash messages to toasts
+    const flashes = document.querySelectorAll('[data-auto-dismiss]');
+    flashes.forEach(f => {
+        const type = f.classList.contains('alert-success') ? 'success' : (f.classList.contains('alert-error') ? 'error' : 'info');
+        showToast(f.innerText.trim(), type);
+        f.remove();
+    });
+});
+</script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

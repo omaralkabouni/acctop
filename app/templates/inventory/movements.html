@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+  <div><h2>حركة المخزون — {{ product.name_ar or product.name }}</h2><p class="text-muted">الكمية الحالية: <strong>{{ product.stock_qty }} {{ product.unit }}</strong></p></div>
+  <div class="flex gap-2"><a href="{{ url_for('inventory.adjust_stock', product_id=product.id) }}" class="btn btn-primary">تسوية</a><a href="{{ url_for('inventory.index') }}" class="btn btn-secondary">العودة</a></div>
+</div>
+<div class="card">
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>التاريخ</th><th>النوع</th><th class="num">الكمية</th><th class="num">سعر الوحدة</th><th>المرجع</th><th>ملاحظات</th></tr></thead>
+      <tbody>
+        {% for m in movements %}
+        <tr>
+          <td class="num">{{ m.created_at | fdate }}</td>
+          <td><span class="badge {{ 'badge-green' if m.type=='in' else ('badge-red' if m.type=='out' else 'badge-yellow') }}">{{ m.type_ar }}</span></td>
+          <td class="num" style="font-weight:700;color:{{ 'var(--secondary)' if m.type=='in' else 'var(--error)' }}">{{ '+' if m.type=='in' else '-' }}{{ m.qty }}</td>
+          <td class="num">{{ m.unit_cost | currency }}</td>
+          <td>{{ m.reference or '—' }}</td>
+          <td>{{ m.notes or '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--outline)">لا توجد حركات مخزون</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

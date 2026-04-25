@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header">
+  <h2>الإعدادات العامة</h2>
+  <p class="text-muted">إدارة بيانات المنشأة والضرائب والعملات</p>
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+  
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+    <!-- Company Profile -->
+    <div class="card">
+      <div class="card-header"><h4>بيانات المنشأة</h4></div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">اسم الشركة / المتجر</label>
+          <input type="text" name="company_name" class="form-control" value="{{ settings.company_name }}" required/>
+        </div>
+        
+        <div class="form-group" style="margin-top:16px">
+          <label class="form-label">شعار الشركة (Logo)</label>
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px">
+            {% if settings.company_logo %}
+              <img src="{{ url_for('static', filename=settings.company_logo) }}" style="width:80px;height:80px;object-fit:contain;border:1px solid #eee;border-radius:8px"/>
+            {% else %}
+              <div style="width:80px;height:80px;background:#f5f5f5;display:flex;align-items:center;justify-content:center;border-radius:8px;color:#ccc">
+                <span class="material-symbols-outlined" style="font-size:32px">image</span>
+              </div>
+            {% endif %}
+            <input type="file" name="company_logo" class="form-control" accept="image/*"/>
+          </div>
+          <p class="text-muted" style="font-size:12px">يُفضل استخدام صورة بخلفية شفافة (PNG) وبأبعاد مربعة.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Financial Settings -->
+    <div class="card">
+      <div class="card-header"><h4>الإعدادات المالية</h4></div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">نسبة الضريبة (%)</label>
+            <input type="number" name="tax_rate" class="form-control num" value="{{ settings.tax_rate }}" step="0.01"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">رمز العملة</label>
+            <input type="text" name="currency_symbol" class="form-control" value="{{ settings.currency_symbol }}" placeholder="$ or ر.س"/>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:16px; display:flex; align-items:center; gap:10px">
+          <input type="checkbox" name="show_tax" id="show_tax" {% if settings.show_tax %}checked{% endif %} style="width:20px;height:20px"/>
+          <label for="show_tax" class="form-label" style="margin:0">تفعيل ضريبة القيمة المضافة في الفواتير</label>
+        </div>
+        
+        <div class="form-group" style="margin-top:16px">
+          <label class="form-label">سعر صرف العملة المحلية (مقابل العملة المختارة)</label>
+          <input type="number" name="exchange_rate" class="form-control num" value="{{ settings.exchange_rate }}" step="0.0001"/>
+          <p class="text-muted" style="font-size:12px;margin-top:4px">يستخدم لتحويل المبالغ في التقارير إذا كانت العملة الأساسية مختلفة.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Integrations -->
+    <div class="card" style="grid-column: span 2">
+      <div class="card-header"><h4>الربط التقني (n8n Webhook)</h4></div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">رابط Webhook الخاص بـ n8n</label>
+          <input type="url" name="n8n_webhook_url" class="form-control num" value="{{ settings.n8n_webhook_url or '' }}" placeholder="https://n8n.your-domain.com/webhook/..."/>
+          <p class="text-muted" style="font-size:12px;margin-top:4px">سيتم إرسال بيانات الفواتير والسندات إلى هذا الرابط فور حفظها (للأتمتة).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:24px;display:flex;justify-content:flex-end">
+    <button type="submit" class="btn btn-primary" style="padding:12px 40px">حفظ الإعدادات</button>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends 'print_base.html' if request.args.get('print') else 'base.html' %}
+{% block content %}
+<div class="{{ 'print-doc layout-a4' if request.args.get('print') }}">
+<div class="page-header flex-between no-print">
+  <div><h2>كشف الحساب — دفتر الأستاذ</h2></div>
+  {% if selected_account %}
+  <div class="flex gap-2">
+    <a href="{{ url_for('reports.general_ledger', account_id=selected_account.id, start_date=start_date, end_date=end_date, print=1) }}" target="_blank" class="btn btn-secondary">
+      <span class="material-symbols-outlined">print</span> طباعة
+    </a>
+  </div>
+  {% endif %}
+</div>
+<div class="card no-print" style="margin-bottom:16px">
+  <div class="card-body" style="padding:14px 20px">
+    <form method="GET" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+      <div class="form-group" style="margin:0;flex:1;min-width:200px">
+        <label class="form-label">الحساب</label>
+        <select name="account_id" class="form-control searchable-select">
+          <option value="">-- اختر الحساب --</option>
+          {% for acc in accounts %}<option value="{{ acc.id }}" {{ 'selected' if selected_account and selected_account.id==acc.id }}>{{ acc.code }} — {{ acc.name_ar }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">من</label>
+        <input type="date" name="start_date" class="form-control" value="{{ start_date | fdate }}"/>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">إلى</label>
+        <input type="date" name="end_date" class="form-control" value="{{ end_date | fdate }}"/>
+      </div>
+      <button type="submit" class="btn btn-primary"><span class="material-symbols-outlined">search</span> عرض</button>
+      {% if selected_account %}
+      <a href="{{ url_for('reports.general_ledger', account_id=selected_account.id, start_date=start_date, end_date=end_date, export=1) }}" class="btn btn-secondary">
+        <span class="material-symbols-outlined">download</span> تصدير Excel
+      </a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+{% if selected_account %}
+<div style="margin-bottom:12px;display:flex;gap:16px;align-items:center">
+  <div class="kpi-card" style="padding:14px 20px;flex:1">
+    <p class="kpi-label">الحساب</p>
+    <p style="font-weight:700">{{ selected_account.code }} — {{ selected_account.name_ar }}</p>
+  </div>
+  <div class="kpi-card {{ 'green' if selected_account.balance >= 0 else 'red' }}" style="padding:14px 20px;flex:1">
+    <p class="kpi-label">الرصيد</p>
+    <div class="kpi-value">{{ selected_account.balance | currency }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>التاريخ</th><th>المرجع</th><th>البيان</th><th class="num">مدين</th><th class="num">دائن</th></tr></thead>
+      <tbody>
+        {% set ns = namespace(running=0) %}
+        {% for line, entry in lines %}
+        {% set ns.running = ns.running + (line.debit | float) - (line.credit | float) %}
+        <tr>
+          <td class="num">{{ entry.date | fdate }}</td>
+          <td><a href="{{ url_for('accounts.view_journal_entry', entry_id=entry.id) }}">{{ entry.reference }}</a></td>
+          <td>{{ line.description or entry.description }}</td>
+          <td class="num" style="color:var(--secondary)">{{ line.debit | currency if line.debit else '—' }}</td>
+          <td class="num" style="color:var(--error)">{{ line.credit | currency if line.credit else '—' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--outline)">لا توجد حركات في هذه الفترة</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="empty-state"><span class="material-symbols-outlined">menu_book</span><h3>اختر حساباً لعرض الكشف</h3></div>
+{% endif %}
+</div>
+{% endblock %}

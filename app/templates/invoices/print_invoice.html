@@ -1,0 +1,273 @@
+{% extends 'print_base.html' %}
+{% block title %}فاتورة رقم {{ invoice.number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .layout-a4 {
+    color: #333;
+    font-size: 13px;
+    padding: 15mm !important;
+    font-family: 'Cairo', sans-serif;
+  }
+  .a4-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+  }
+  .company-brand h1 {
+    font-size: 20px;
+    margin: 0;
+    color: #1a1a1a;
+  }
+  .invoice-meta {
+    text-align: left;
+    min-width: 180px;
+  }
+  .invoice-meta h2 {
+    font-size: 22px;
+    color: #2563eb;
+    margin: 0 0 8px 0;
+  }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 12px;
+    font-size: 13px;
+  }
+  .meta-label { color: #666; font-weight: 600; }
+  .meta-value { color: #1a1a1a; font-weight: 700; text-align: left; }
+
+  .bill-to {
+    margin-bottom: 25px;
+    background: #f9fafb;
+    padding: 12px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .bill-to-info h3 { font-size: 11px; color: #666; text-transform: uppercase; margin-bottom: 4px; }
+  .bill-to-info p { font-size: 15px; font-weight: 700; margin: 0; }
+
+  .a4-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 25px;
+  }
+  .a4-table th {
+    background: #f3f4f6;
+    color: #374151;
+    font-weight: 700;
+    text-align: right;
+    padding: 10px 8px;
+    border-bottom: 2px solid #e5e7eb;
+    font-size: 12px;
+  }
+  .a4-table td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: top;
+    font-size: 13px;
+  }
+  .a4-table .num { font-family: 'Inter', sans-serif; text-align: left; }
+
+  .a4-footer {
+    display: flex;
+    justify-content: space-between;
+  }
+  .notes-section { flex: 1; padding-right: 20px; }
+  .notes-section h4 { font-size: 11px; color: #666; margin-bottom: 4px; }
+  .notes-section p { font-size: 12px; color: #4b5563; line-height: 1.4; }
+
+  .summary-section { width: 220px; }
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 13px;
+  }
+  .summary-row.total {
+    border-bottom: none;
+    background: #2563eb;
+    color: white;
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: 8px;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .summary-row.total span:last-child { font-family: 'Inter', sans-serif; }
+  .pos-divider { border-top: 1px dashed #ccc; margin: 5px 0; }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="print-doc layout-{{ layout }}">
+  {% if layout == 'a4' %}
+  <!-- Professional & Compact A4 Layout -->
+  <div class="a4-header" style="justify-content: space-between; align-items: flex-start;">
+    <div class="client-info-top">
+      <p style="font-size: 16px; font-weight: 800; margin: 0;">
+        <span style="color: #666; font-weight: 400; font-size: 14px;">العميل:</span> 
+        {{ invoice.party_display_name }}
+      </p>
+      {% if invoice.party %}
+        <div style="font-size: 12px; color: #444; margin-top: 5px;">
+          {% if invoice.party.phone %}<div>الهاتف: {{ invoice.party.phone }}</div>{% endif %}
+          {% if invoice.party.tax_number %}<div>الرقم الضريبي: {{ invoice.party.tax_number }}</div>{% endif %}
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="invoice-meta" style="text-align: left;">
+      <h2 style="margin-top: 0;">
+        {% if invoice.type == 'quotation' %}
+          عرض سعر
+        {% else %}
+          فاتورة {{ 'ضريبية' if sys_settings.show_tax else '' }}
+        {% endif %}
+      </h2>
+      <div class="meta-grid">
+        <span class="meta-label">رقم الفاتورة:</span>
+        <span class="meta-value">{{ invoice.number }}</span>
+        <span class="meta-label">التاريخ:</span>
+        <span class="meta-value">{{ invoice.date | fdate }}</span>
+        {% if invoice.type == 'quotation' and invoice.due_date %}
+        <span class="meta-label">صالح لغاية:</span>
+        <span class="meta-value">{{ invoice.due_date | fdate }}</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="bill-to" style="margin-top: -10px; margin-bottom: 20px; background: none; border-bottom: 1px solid #eee; border-radius: 0; padding: 10px 0;">
+    <div style="text-align: right">
+       <span class="badge badge-{{ invoice.status_color }}" style="font-size: 12px; padding: 4px 10px;">{{ invoice.status_ar }}</span>
+    </div>
+    {% if invoice.due_date %}
+    <div style="text-align: left; font-size: 12px; color: #666;">
+      تاريخ الاستحقاق: <strong>{{ invoice.due_date | fdate }}</strong>
+    </div>
+    {% endif %}
+  </div>
+
+  <table class="a4-table">
+    <thead>
+      <tr>
+        <th style="width: 40px">#</th>
+        <th>الوصف / الصنف</th>
+        <th style="width: 70px" class="num">الكمية</th>
+        <th style="width: 100px" class="num">السعر</th>
+        <th style="width: 70px" class="num">الخصم</th>
+        <th style="width: 110px" class="num">الإجمالي</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in invoice.lines %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>
+          <span style="font-weight: 700;">{{ line.description }}</span>
+        </td>
+        <td class="num">{{ line.qty | rzero }}</td>
+        <td class="num">{{ line.unit_price | currency }}</td>
+        <td class="num">{{ line.discount_pct | rzero }}%</td>
+        <td class="num">{{ line.total | currency }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="a4-footer">
+    <div class="notes-section">
+      {% if invoice.notes %}
+      <h4>ملاحظات:</h4>
+      <p>{{ invoice.notes }}</p>
+      {% endif %}
+    </div>
+    <div class="summary-section">
+      <div class="summary-row" style="padding: 2px 0;">
+        <span>المجموع الفرعي</span>
+        <span class="num">{{ invoice.subtotal | currency }}</span>
+      </div>
+      {% if invoice.discount_amount > 0 %}
+      <div class="summary-row" style="padding: 2px 0;">
+        <span>الخصم</span>
+        <span class="num">- {{ invoice.discount_amount | currency }}</span>
+      </div>
+      {% endif %}
+      {% if sys_settings.show_tax and invoice.tax_amount > 0 %}
+      <div class="summary-row" style="padding: 2px 0;">
+        <span>الضريبة ({{ invoice.tax_rate | rzero }}%)</span>
+        <span class="num">{{ invoice.tax_amount | currency }}</span>
+      </div>
+      {% endif %}
+      <div class="summary-row total" style="margin-top: 5px; padding: 8px;">
+        <span>الإجمالي</span>
+        <span>{{ invoice.total | currency }}</span>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <!-- POS Layout (Keep as is, but can be slightly polished) -->
+  <div class="text-center mb-2">
+    <h2 style="margin: 0; font-size: 18px;">{{ sys_settings.company_name if sys_settings else 'ERP TOP' }}</h2>
+    <div class="pos-divider"></div>
+    <h3 style="margin: 5px 0;">{{ invoice.type_ar }}</h3>
+    <p>رقم: {{ invoice.number }}</p>
+    <p>التاريخ: {{ invoice.date | fdate }}</p>
+    <p>العميل: {{ invoice.party.display_name if invoice.party else 'عميل نقدي' }}</p>
+    <div class="pos-divider"></div>
+  </div>
+  
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 40%">الصنف</th>
+        <th class="text-center">الكمية</th>
+        <th class="text-center">السعر</th>
+        <th class="text-left">المجموع</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for line in invoice.lines %}
+      <tr>
+        <td>{{ line.description }}</td>
+        <td class="text-center">{{ line.qty }}</td>
+        <td class="text-center">{{ line.unit_price | currency }}</td>
+        <td class="text-left font-bold">{{ line.total | currency }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="pos-divider"></div>
+  <div class="flex" style="justify-content: flex-end;">
+    <div style="width: 100%;">
+      <div class="flex flex-between mb-1">
+        <span>المجموع الفرعي:</span>
+        <span>{{ invoice.subtotal | currency }}</span>
+      </div>
+      {% if sys_settings.show_tax and invoice.tax_amount > 0 %}
+      <div class="flex flex-between mb-1">
+        <span>ضريبة ({{ invoice.tax_rate }}%):</span>
+        <span>{{ invoice.tax_amount | currency }}</span>
+      </div>
+      {% endif %}
+      <div class="flex flex-between mb-2" style="font-size: 16px; font-weight: bold;">
+        <span>الإجمالي:</span>
+        <span>{{ invoice.total | currency }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="pos-divider"></div>
+  <div class="text-center" style="margin-top: 10px;">
+    <p>شكراً لتعاملكم معنا</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

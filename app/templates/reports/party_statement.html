@@ -1,0 +1,146 @@
+{% extends 'print_base.html' if request.args.get('print') else 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="{{ 'print-doc layout-a4' if request.args.get('print') }}">
+<div class="page-header flex-between no-print">
+  <div><h2>كشف حساب تفصيلي</h2></div>
+  {% if selected_party %}
+  <div class="flex gap-2">
+    <button class="btn btn-primary" onclick="sendToN8N()">
+      <span class="material-symbols-outlined">send</span> إرسال للعميل
+    </button>
+    <a href="{{ url_for('reports.party_statement', party_id=selected_party.id, start_date=start_date, end_date=end_date, print=1) }}" target="_blank" class="btn btn-secondary">
+      <span class="material-symbols-outlined">print</span> طباعة احترافية
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+async function sendToN8N() {
+  {% if selected_party %}
+  showConfirm('هل تريد إرسال كشف الحساب الحالي إلى العميل عبر n8n؟', async () => {
+    try {
+      const response = await fetch("{{ url_for('parties.api_send_statement', party_id=selected_party.id) }}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}' }
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        showToast('تم إرسال الطلب إلى n8n بنجاح!', 'success');
+      } else {
+        showToast('خطأ: ' + (result.error || 'حدث خطأ أثناء الإرسال'), 'error');
+      }
+    } catch (err) {
+      showToast('خطأ في الاتصال بالخادم', 'error');
+    }
+  });
+  {% endif %}
+}
+</script>
+
+<div class="card no-print" style="margin-bottom:16px">
+  <div class="card-body" style="padding:14px 20px">
+    <form method="GET" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+      <div class="form-group" style="margin:0;flex:1;min-width:250px">
+        <label class="form-label">العميل / المورد</label>
+        <select name="party_id" class="form-control searchable-select" required>
+          <option value="">-- اختر الطرف --</option>
+          {% for p in parties %}
+          <option value="{{ p.id }}" {{ 'selected' if selected_party and selected_party.id == p.id }}>{{ p.display_name }} ({{ p.type_ar }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">من</label>
+        <input type="date" name="start_date" class="form-control" value="{{ start_date | fdate }}"/>
+      </div>
+      <div class="form-group" style="margin:0">
+        <label class="form-label">إلى</label>
+        <input type="date" name="end_date" class="form-control" value="{{ end_date | fdate }}"/>
+      </div>
+      <button type="submit" class="btn btn-primary"><span class="material-symbols-outlined">search</span> عرض</button>
+      {% if selected_party %}
+      <a href="{{ url_for('reports.party_statement', party_id=selected_party.id, start_date=start_date, end_date=end_date, export=1) }}" class="btn btn-secondary">
+        <span class="material-symbols-outlined">download</span> تصدير Excel
+      </a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+{% if selected_party %}
+<div style="margin-bottom:16px;display:flex;gap:16px;align-items:center" class="print-break">
+  <div class="kpi-card" style="padding:14px 20px;flex:1">
+    <p class="kpi-label">الطرف</p>
+    <p style="font-weight:700;font-size:16px">{{ selected_party.display_name }}</p>
+    <p style="font-size:13px;color:var(--outline)">{{ selected_party.phone or 'لا يوجد رقم' }}</p>
+  </div>
+  <div class="kpi-card" style="padding:14px 20px;flex:1">
+    <p class="kpi-label">إجمالي لنا</p>
+    <div class="kpi-value">{{ total_debit | currency }}</div>
+  </div>
+  <div class="kpi-card" style="padding:14px 20px;flex:1">
+    <p class="kpi-label">إجمالي له</p>
+    <div class="kpi-value" style="color:var(--secondary)">{{ total_credit | currency }}</div>
+  </div>
+  <div class="kpi-card" style="padding:14px 20px;flex:1">
+    <p class="kpi-label">المتبقي (الرصيد الحالي)</p>
+    <div class="kpi-value" style="color: {{ 'var(--error)' if final_balance < 0 else 'var(--primary)' }}">
+      {% if final_balance > 0 %}
+        {{ final_balance | currency }} <span style="font-size:14px;font-weight:400">(لنا)</span>
+      {% elif final_balance < 0 %}
+        {{ (final_balance * -1) | currency }} <span style="font-size:14px;font-weight:400">(له)</span>
+      {% else %}
+        {{ 0 | currency }}
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>التاريخ</th>
+          <th>النوع</th>
+          <th>رقم المرجع</th>
+          <th>البيان / ملاحظات</th>
+          <th class="num">لنا</th>
+          <th class="num">له</th>
+          <th class="num">الرصيد المتبقي</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in lines %}
+        <tr>
+          <td class="num">{{ line.date | fdate }}</td>
+          <td>
+            <span class="badge badge-{{ 'info' if line.is_invoice else 'success' }}">{{ line.type }}</span>
+          </td>
+          <td style="font-family:'Inter';font-weight:600">
+            {% if line.is_invoice %}
+            <a href="{{ url_for('invoices.view', invoice_id=line.obj_id) }}">{{ line.reference }}</a>
+            {% else %}
+            {{ line.reference }}
+            {% endif %}
+          </td>
+          <td>{{ line.notes or '—' }}</td>
+          <td class="num" style="color:var(--error)">{{ line.debit | currency if line.debit > 0 else '—' }}</td>
+          <td class="num" style="color:var(--secondary)">{{ line.credit | currency if line.credit > 0 else '—' }}</td>
+          <td class="num" style="font-weight:700" dir="ltr">{{ line.balance | currency }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center;padding:30px;color:var(--outline)">لا توجد حركات في هذه الفترة</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="empty-state"><span class="material-symbols-outlined">person_search</span><h3>اختر عميلاً لعرض كشف الحساب</h3></div>
+{% endif %}
+</div>
+{% endblock %}

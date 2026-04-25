@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+  <div>
+    <h2>{{ title }}</h2>
+  </div>
+  <a href="{{ url_for('auth.users') }}" class="btn btn-secondary">
+    <span class="material-symbols-outlined">arrow_forward</span> العودة
+  </a>
+</div>
+
+<div class="card" style="max-width:560px">
+  <div class="card-body">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">الاسم الكامل *</label>
+          <input type="text" name="full_name" class="form-control" value="{{ user.full_name if user else '' }}" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">اسم المستخدم *</label>
+          <input type="text" name="username" class="form-control" value="{{ user.username if user else '' }}" {{ 'readonly' if user else '' }} required/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">البريد الإلكتروني *</label>
+        <input type="email" name="email" class="form-control" value="{{ user.email if user else '' }}" required/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">الدور *</label>
+          <select name="role_id" class="form-control" required>
+            {% for r in roles %}
+            <option value="{{ r.id }}" {{ 'selected' if user and user.role_id == r.id else '' }}>{{ r.name_ar }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">كلمة المرور {{ '' if user else '*' }}</label>
+          <input type="password" name="password" class="form-control" {{ '' if user else 'required' }} placeholder="{{ 'اتركه فارغاً للإبقاء' if user else '' }}"/>
+        </div>
+      </div>
+      {% if user %}
+      <div class="form-group" style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" name="is_active" id="is_active" {{ 'checked' if user.is_active else '' }}/>
+        <label for="is_active" class="form-label" style="margin:0">حساب نشط</label>
+      </div>
+      {% endif %}
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button type="submit" class="btn btn-primary">
+          <span class="material-symbols-outlined">save</span> حفظ
+        </button>
+        <a href="{{ url_for('auth.users') }}" class="btn btn-secondary">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

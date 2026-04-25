@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% block topbar_actions %}
+<a href="{{ url_for('reports.profit_loss') }}" class="btn btn-secondary btn-sm">
+  <span class="material-symbols-outlined">analytics</span> التقارير
+</a>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const monthlyData = {{ monthly_data | tojson }};
+const labels = monthlyData.map(d => d.month);
+const revenues = monthlyData.map(d => d.revenue);
+const expenses = monthlyData.map(d => d.expenses);
+
+createAreaChart('cashflowChart', labels, [
+  { label: 'الإيرادات', data: revenues, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.08)', tension: 0.4, fill: true, borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: '#10b981' },
+  { label: 'المصروفات', data: expenses, borderColor: '#cbd5e1', backgroundColor: 'transparent', tension: 0.4, borderDash: [5,5], borderWidth: 2, pointRadius: 3 }
+]);
+
+const invStatus = {{ invoice_status | tojson }};
+createDoughnutChart('invoiceChart',
+  ['مدفوعة','قيد الانتظار','متأخرة','مسودة'],
+  [invStatus.paid||0, invStatus.sent||0, invStatus.overdue||0, invStatus.draft||0],
+  ['#10b981','#3b82f6','#ef4444','#e2e8f0']
+);
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header flex-between">
+  <div>
+    <h2>لوحة التحكم</h2>
+    <p class="text-muted">نظرة شاملة على الأداء المالي للمؤسسة</p>
+  </div>
+  <div class="flex gap-2">
+    <span style="font-size:13px;color:var(--outline)">آخر تحديث: الآن</span>
+  </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+  <div class="kpi-card green">
+    <div class="kpi-top">
+      <div class="kpi-icon green"><span class="material-symbols-outlined">trending_up</span></div>
+      <span class="kpi-badge up">+هذا الشهر</span>
+    </div>
+    <p class="kpi-label">إجمالي الإيرادات</p>
+    <div class="kpi-value">{{ revenue | currency }}</div>
+  </div>
+  <div class="kpi-card red">
+    <div class="kpi-top">
+      <div class="kpi-icon red"><span class="material-symbols-outlined">payments</span></div>
+    </div>
+    <p class="kpi-label">إجمالي المصروفات</p>
+    <div class="kpi-value">{{ expenses_total | currency }}</div>
+  </div>
+  <div class="kpi-card {{ 'green' if net_profit >= 0 else 'red' }}">
+    <div class="kpi-top">
+      <div class="kpi-icon {{ 'green' if net_profit >= 0 else 'red' }}">
+        <span class="material-symbols-outlined">account_balance_wallet</span>
+      </div>
+    </div>
+    <p class="kpi-label">صافي الربح</p>
+    <div class="kpi-value {{ 'text-success' if net_profit >= 0 else 'text-danger' }}">{{ net_profit | currency }}</div>
+  </div>
+  <div class="kpi-card blue">
+    <div class="kpi-top">
+      <div class="kpi-icon blue"><span class="material-symbols-outlined">pending_actions</span></div>
+    </div>
+    <p class="kpi-label">فواتير مستحقة</p>
+    <div class="kpi-value">{{ outstanding | currency }}</div>
+  </div>
+</div>
+
+<!-- Charts Grid -->
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:24px">
+  <!-- Cash Flow Chart -->
+  <div class="card">
+    <div class="card-header">
+      <h4>التدفق النقدي الشهري</h4>
+      <div class="flex gap-3" style="font-size:12px;color:var(--on-surface-var)">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#10b981;display:inline-block"></span>الإيرادات</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#cbd5e1;display:inline-block"></span>المصروفات</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="chart-container" style="height:260px"><canvas id="cashflowChart"></canvas></div>
+    </div>
+  </div>
+  <!-- Invoice Status -->
+  <div class="card">
+    <div class="card-header"><h4>حالة الفواتير</h4></div>
+    <div class="card-body" style="display:flex;flex-direction:column;align-items:center">
+      <div class="chart-container" style="height:180px;width:180px;position:relative">
+        <canvas id="invoiceChart"></canvas>
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <span style="font-size:24px;font-weight:700;font-family:'Inter'">{{ total_invoices }}</span>
+          <span style="font-size:11px;color:var(--outline)">إجمالي</span>
+        </div>
+      </div>
+      <div style="width:100%;margin-top:16px;display:flex;flex-direction:column;gap:8px">
+        <div class="flex-between" style="background:var(--surface-low);padding:8px 12px;border-radius:var(--radius)">
+          <span style="display:flex;align-items:center;gap:6px;font-size:13px"><span style="width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block"></span>مدفوعة</span>
+          <span class="num" style="font-weight:700;color:#10b981">{{ invoice_status.get('paid',0) }}</span>
+        </div>
+        <div class="flex-between" style="background:var(--surface-low);padding:8px 12px;border-radius:var(--radius)">
+          <span style="display:flex;align-items:center;gap:6px;font-size:13px"><span style="width:8px;height:8px;border-radius:50%;background:#3b82f6;display:inline-block"></span>مُرسلة</span>
+          <span class="num" style="font-weight:700;color:#3b82f6">{{ invoice_status.get('sent',0) }}</span>
+        </div>
+        <div class="flex-between" style="background:var(--surface-low);padding:8px 12px;border-radius:var(--radius)">
+          <span style="display:flex;align-items:center;gap:6px;font-size:13px"><span style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block"></span>متأخرة</span>
+          <span class="num" style="font-weight:700;color:#ef4444">{{ invoice_status.get('overdue',0) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Grid -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+  <!-- Recent Invoices -->
+  <div class="card">
+    <div class="card-header">
+      <h4>آخر الفواتير</h4>
+      <a href="{{ url_for('invoices.index') }}" class="btn btn-ghost btn-sm">عرض الكل</a>
+    </div>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead><tr><th>رقم</th><th>العميل</th><th>الإجمالي</th><th>الحالة</th></tr></thead>
+        <tbody>
+          {% for inv in recent_invoices %}
+          <tr>
+            <td><a href="{{ url_for('invoices.view', invoice_id=inv.id) }}" style="font-weight:700">{{ inv.number }}</a></td>
+            <td>{{ inv.party.display_name if inv.party else '—' }}</td>
+            <td class="num">{{ inv.total | currency }}</td>
+            <td><span class="badge badge-{{ inv.status_color }}">{{ inv.status_ar }}</span></td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" style="text-align:center;padding:20px;color:var(--outline)">لا توجد فواتير</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Low Stock Alert -->
+  <div class="card">
+    <div class="card-header">
+      <h4>تنبيهات المخزون</h4>
+      <a href="{{ url_for('inventory.index') }}" class="btn btn-ghost btn-sm">إدارة المخزون</a>
+    </div>
+    <div class="card-body">
+      {% if low_stock %}
+        {% for p in low_stock %}
+        <div class="flex-between" style="padding:10px 0;border-bottom:1px solid var(--surface-high)">
+          <div>
+            <div style="font-weight:700;font-size:14px">{{ p.name_ar or p.name }}</div>
+            <div style="font-size:12px;color:var(--outline)">{{ p.category or '—' }}</div>
+          </div>
+          <div style="text-align:left">
+            <div class="num" style="font-weight:700;color:var(--error)">{{ p.stock_qty }}</div>
+            <div style="font-size:11px;color:var(--outline)">من {{ p.min_stock }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state" style="padding:30px">
+          <span class="material-symbols-outlined" style="font-size:40px">inventory_2</span>
+          <p>المخزون بمستويات جيدة</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

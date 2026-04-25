@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+  <div>
+    <h2>كشف حساب</h2>
+    <p class="text-muted">{{ party.display_name }} — رصيد إجمالي: <strong>{{ balance | currency }}</strong></p>
+  </div>
+  <div class="flex gap-2">
+    <button class="btn btn-secondary" onclick="window.print()">
+      <span class="material-symbols-outlined">print</span> طباعة
+    </button>
+    <button class="btn btn-primary" onclick="sendToN8N()">
+      <span class="material-symbols-outlined">send</span> إرسال للعميل
+    </button>
+    <a href="{{ url_for('parties.view', party_id=party.id) }}" class="btn btn-ghost">العودة</a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>التاريخ</th>
+          <th>الوصف</th>
+          <th class="num">مدين</th>
+          <th class="num">دائن</th>
+          <th class="num">الرصيد</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in entries %}
+        <tr>
+          <td class="num">{{ entry.date | fdate }}</td>
+          <td>{{ entry.description }}</td>
+          <td class="num">{{ entry.debit | currency if entry.debit > 0 else '—' }}</td>
+          <td class="num">{{ entry.credit | currency if entry.credit > 0 else '—' }}</td>
+          <td class="num font-bold">{{ entry.balance | currency }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--outline)">لا توجد حركات مسجلة</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+async function sendToN8N() {
+  if (!confirm('هل تريد إرسال كشف الحساب الحالي إلى العميل عبر n8n؟')) return;
+  
+  try {
+    const response = await fetch("{{ url_for('parties.api_send_statement', party_id=party.id) }}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}' }
+    });
+    
+    const result = await response.json();
+    if (result.success) {
+      alert('تم إرسال الطلب إلى n8n بنجاح!');
+    } else {
+      alert('خطأ: ' + (result.error || 'حدث خطأ أثناء الإرسال'));
+    }
+  } catch (err) {
+    alert('خطأ في الاتصال بالخادم');
+  }
+}
+</script>
+{% endblock %}

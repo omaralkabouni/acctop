@@ -1,0 +1,173 @@
+{% extends 'print_base.html' %}
+{% block title %}سند {{ 'قبض' if voucher.type == 'receipt' else 'صرف' }} رقم {{ voucher.number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .layout-a4 {
+    color: #2c3e50;
+    line-height: 1.6;
+    padding: 30mm 20mm !important;
+  }
+  .a4-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 40px;
+    border-bottom: 2px solid #f1f3f5;
+    padding-bottom: 20px;
+  }
+  .company-info h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin: 0;
+  }
+  .voucher-title {
+    background: #f8f9fa;
+    padding: 15px 25px;
+    border-radius: 12px;
+    text-align: left;
+  }
+  .voucher-title h2 {
+    font-size: 30px;
+    color: #40c057; /* Green for receipt */
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .voucher-title.payment h2 {
+    color: #fa5252; /* Red for payment */
+  }
+  .amount-box {
+    margin: 40px 0;
+    padding: 25px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-right: 5px solid #40c057;
+  }
+  .amount-box.payment { border-right-color: #fa5252; }
+  .amount-val {
+    font-size: 36px;
+    font-weight: 800;
+    color: #2c3e50;
+  }
+  .details-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    font-size: 18px;
+    margin-bottom: 60px;
+  }
+  .detail-row {
+    display: flex;
+    border-bottom: 1px solid #f1f3f5;
+    padding-bottom: 10px;
+  }
+  .detail-label {
+    width: 200px;
+    color: #868e96;
+    font-weight: 600;
+  }
+  .signatures {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 100px;
+  }
+  .sig-box {
+    width: 250px;
+    text-align: center;
+    border-top: 1px solid #dee2e6;
+    padding-top: 15px;
+    color: #495057;
+    font-weight: 700;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="print-doc layout-{{ layout }}">
+  {% if layout == 'a4' %}
+  <!-- Modern A4 Layout -->
+  <div class="a4-header">
+    <div class="company-info">
+      {% if sys_settings and sys_settings.company_logo %}
+        <img src="{{ url_for('static', filename=sys_settings.company_logo) }}" style="max-height: 100px; margin-bottom: 15px;">
+      {% endif %}
+      <h1>{{ sys_settings.company_name if sys_settings else 'ERP TOP' }}</h1>
+    </div>
+    <div class="voucher-title {{ 'payment' if voucher.type == 'payment' }}">
+      <h2>{{ voucher.type_ar }}</h2>
+      <p style="margin-top: 5px; font-weight: 700;">رقم: {{ voucher.number }}</p>
+      <p style="font-size: 14px; color: #868e96;">{{ voucher.date | fdate }}</p>
+    </div>
+  </div>
+
+  <div class="amount-box {{ 'payment' if voucher.type == 'payment' }}">
+    <div>
+      <p style="color: #868e96; font-size: 14px; margin-bottom: 5px;">{{ 'استلمنا من المكرم/ة' if voucher.type == 'receipt' else 'صرفنا للمكرم/ة' }}</p>
+      <p style="font-size: 24px; font-weight: 700;">{{ voucher.party.display_name }}</p>
+    </div>
+    <div class="amount-val">{{ voucher.amount | currency }}</div>
+  </div>
+
+  <div class="details-grid">
+    <div class="detail-row">
+      <span class="detail-label">طريقة الدفع:</span>
+      <span>{{ voucher.account.name_ar }}</span>
+    </div>
+    {% if voucher.reference %}
+    <div class="detail-row">
+      <span class="detail-label">رقم المرجع:</span>
+      <span>{{ voucher.reference }}</span>
+    </div>
+    {% endif %}
+    {% if voucher.notes %}
+    <div class="detail-row" style="border: none;">
+      <span class="detail-label">وذلك عن:</span>
+      <span style="font-weight: 600;">{{ voucher.notes }}</span>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="signatures">
+    <div class="sig-box">توقيع المستلم</div>
+    <div class="sig-box">ختم المنشأة</div>
+    <div class="sig-box">توقيع المحاسب</div>
+  </div>
+
+  {% else %}
+  <div class="text-center mb-2">
+    <h2 style="margin: 0; font-size: 18px;">{{ sys_settings.company_name if sys_settings else 'ERP TOP' }}</h2>
+    <div class="pos-divider"></div>
+    <h3 style="margin: 5px 0;">سند {{ 'قبض' if voucher.type == 'receipt' else 'صرف' }}</h3>
+    <p>رقم: {{ voucher.number }}</p>
+    <p>التاريخ: {{ voucher.date | fdate }}</p>
+    <div class="pos-divider"></div>
+  </div>
+  
+  <p class="font-bold">{{ 'العميل:' if voucher.type == 'receipt' else 'المورد:' }}</p>
+  <p class="mb-2">{{ voucher.party.display_name }}</p>
+  
+  <div class="flex flex-between mb-1" style="font-size: 16px; font-weight: bold;">
+    <span>المبلغ:</span>
+    <span>{{ voucher.amount | currency }}</span>
+  </div>
+  
+  <p class="mb-1">حساب: {{ voucher.account.name_ar }}</p>
+  {% if voucher.reference %}<p class="mb-1">مرجع: {{ voucher.reference }}</p>{% endif %}
+  
+  {% if voucher.notes %}
+  <div class="pos-divider" style="margin: 5px 0"></div>
+  <p>{{ voucher.notes }}</p>
+  {% endif %}
+
+  <div class="pos-divider"></div>
+  <div class="text-center" style="margin-top: 10px;">
+    <p>توقيع المستلم</p>
+    <br><br>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

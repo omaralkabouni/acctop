@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}السندات المالية{% endblock %}
+{% block topbar_actions %}
+<div class="dropdown" style="position:relative">
+  <button class="btn btn-primary" onclick="this.nextElementSibling.classList.toggle('show')">
+    <span class="material-symbols-outlined">add</span> سند جديد
+  </button>
+  <div class="dropdown-menu" style="position:absolute;top:100%;right:0;background:#fff;box-shadow:0 4px 6px -1px rgb(0 0 0 / 0.1);border-radius:6px;min-width:150px;z-index:10;display:none;margin-top:4px">
+    <a href="{{ url_for('vouchers.create', vtype='receipt') }}" class="nav-link" style="padding:10px;display:block">سند قبض (للعملاء)</a>
+    <a href="{{ url_for('vouchers.create', vtype='payment') }}" class="nav-link" style="padding:10px;display:block;border-top:1px solid #eee">سند صرف (للموردين)</a>
+  </div>
+</div>
+<script>
+document.addEventListener('click', e => {
+  if(!e.target.closest('.dropdown')) {
+    document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+  }
+});
+</script>
+<style>.dropdown-menu.show { display: block !important; }</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header flex-between">
+  <div><h2>السندات المالية</h2></div>
+  <div class="flex gap-2">
+    <a href="{{ url_for('vouchers.export_vouchers') }}" class="btn btn-secondary">
+      <span class="material-symbols-outlined">download</span> تصدير Excel
+    </a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>رقم السند</th>
+          <th>النوع</th>
+          <th>التاريخ</th>
+          <th>الطرف (العميل/المورد)</th>
+          <th class="num">المبلغ</th>
+          <th>طريقة الدفع</th>
+          <th style="width:150px">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in vouchers.items %}
+        <tr>
+          <td style="font-family:'Inter';font-weight:600">{{ v.number }}</td>
+          <td>
+            <span class="badge badge-{{ 'success' if v.type == 'receipt' else 'error' }}">
+              {{ v.type_ar }}
+            </span>
+          </td>
+          <td style="font-family:'Inter'">{{ v.date | fdate }}</td>
+          <td>{{ v.party.display_name }}</td>
+          <td class="num" style="font-weight:700">{{ v.amount | currency }}</td>
+          <td>{{ v.account.name_ar }}</td>
+          <td>
+            <div class="flex gap-2">
+              <a href="{{ url_for('vouchers.print_voucher', voucher_id=v.id, layout='a4') }}" target="_blank" class="btn btn-icon" title="طباعة A4">
+                <span class="material-symbols-outlined" style="font-size:18px">print</span>
+              </a>
+              <a href="{{ url_for('vouchers.print_voucher', voucher_id=v.id, layout='pos') }}" target="_blank" class="btn btn-icon" title="طباعة إيصال">
+                <span class="material-symbols-outlined" style="font-size:18px">receipt</span>
+              </a>
+              {% if current_user.is_admin() %}
+              <form method="POST" action="{{ url_for('vouchers.delete', voucher_id=v.id) }}" style="margin:0">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button class="btn btn-icon" data-confirm="حذف السند {{ v.number }}؟" style="color:var(--error)">
+                  <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--outline)">لا توجد سندات حتى الآن</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if vouchers.pages > 1 %}
+  <div class="card-footer" style="display:flex;justify-content:center;gap:8px">
+    {% for p in vouchers.iter_pages() %}
+      {% if p %}
+        <a href="{{ url_for('vouchers.index', page=p) }}" class="btn {{ 'btn-primary' if p == vouchers.page else 'btn-secondary' }} btn-sm">{{ p }}</a>
+      {% else %}
+        <span>...</span>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+  <div><h2>العملاء والموردون</h2></div>
+  <a href="{{ url_for('parties.create') }}" class="btn btn-primary"><span class="material-symbols-outlined">add</span> إضافة</a>
+</div>
+<div class="card" style="margin-bottom:16px">
+  <div class="card-body" style="padding:12px 20px">
+    <form method="GET" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+      <input type="text" name="q" value="{{ search }}" class="form-control" placeholder="بحث..." style="width:200px"/>
+      <div style="display:flex;background:var(--surface-low);border-radius:var(--radius);overflow:hidden;border:1px solid var(--outline-var)">
+        <a href="?type=" class="btn btn-sm {{ 'btn-primary' if not party_type else 'btn-ghost' }}" style="border-radius:0">الكل</a>
+        <a href="?type=customer" class="btn btn-sm {{ 'btn-primary' if party_type=='customer' else 'btn-ghost' }}" style="border-radius:0">عملاء</a>
+        <a href="?type=supplier" class="btn btn-sm {{ 'btn-primary' if party_type=='supplier' else 'btn-ghost' }}" style="border-radius:0">موردون</a>
+      </div>
+      <button type="submit" class="btn btn-secondary"><span class="material-symbols-outlined">search</span></button>
+    </form>
+  </div>
+</div>
+<div class="card">
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>الاسم</th><th>النوع</th><th>الهاتف</th><th>البريد</th><th class="num">الرصيد</th><th>إجراءات</th></tr></thead>
+      <tbody>
+        {% for p in parties.items %}
+        <tr>
+          <td><a href="{{ url_for('parties.view', party_id=p.id) }}" style="font-weight:700">{{ p.display_name }}</a></td>
+          <td><span class="badge {{ 'badge-green' if p.type=='customer' else ('badge-blue' if p.type=='supplier' else 'badge-yellow') }}">{{ p.type_ar }}</span></td>
+          <td>{{ p.phone or '—' }}</td>
+          <td>{{ p.email or '—' }}</td>
+          <td class="num" style="font-weight:700;color:{{ 'var(--secondary)' if p.balance > 0 else ('var(--error)' if p.balance < 0 else 'var(--on-surface)') }}">{{ p.balance | currency }}</td>
+          <td>
+            <div class="flex gap-2">
+              <a href="{{ url_for('parties.view', party_id=p.id) }}" class="btn btn-sm btn-secondary">عرض</a>
+              <a href="{{ url_for('parties.edit', party_id=p.id) }}" class="btn btn-sm btn-ghost">تعديل</a>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6"><div class="empty-state"><span class="material-symbols-outlined">people</span><h3>لا يوجد عملاء أو موردون</h3><a href="{{ url_for('parties.create') }}" class="btn btn-primary">إضافة</a></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

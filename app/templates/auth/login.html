@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>تسجيل الدخول — ERP TOP</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap"/>
+</head>
+<body>
+<div class="login-page">
+  <div class="login-card fade-in">
+    <div class="login-logo"><span class="material-symbols-outlined" style="font-size:28px">account_balance</span></div>
+    <h1 class="login-title">ERP TOP</h1>
+    <p class="login-subtitle">نظام المحاسبة المتكامل — سجّل دخولك</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="alert alert-{{ 'success' if cat=='success' else ('error' if cat=='error' else 'info') }}" style="margin-bottom:16px">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('auth.login') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="form-group">
+        <label class="form-label" for="username">اسم المستخدم أو البريد الإلكتروني</label>
+        <input type="text" id="username" name="username" class="form-control" required autofocus/>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">كلمة المرور</label>
+        <input type="password" id="password" name="password" class="form-control" required placeholder="••••••••"/>
+      </div>
+      <div class="form-group" style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="remember" name="remember" style="width:16px;height:16px"/>
+        <label for="remember" style="font-size:14px;color:var(--on-surface-var)">تذكرني</label>
+      </div>
+      <button type="submit" class="btn btn-primary w-full" style="justify-content:center;padding:12px">
+        <span class="material-symbols-outlined">login</span> تسجيل الدخول
+      </button>
+    </form>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block extra_js %}
+<script>
+let lineIdx = 0;
+function addLine(accId='', desc='', debit=0, credit=0) {
+  const tbody = document.getElementById('lines-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><select name="account_id[]" class="form-control" required style="min-width:200px">
+      <option value="">-- اختر الحساب --</option>
+      {% for acc in accounts %}<option value="{{ acc.id }}" ${accId=={{ acc.id }}?'selected':''}>{{ acc.code }} — {{ acc.name_ar }}</option>{% endfor %}
+    </select></td>
+    <td><input type="text" name="line_description[]" class="form-control" value="${desc}" placeholder="تفاصيل..."/></td>
+    <td><input type="number" name="debit[]" class="form-control num" value="${debit}" min="0" step="any" onchange="calcTotals()" style="width:130px"/></td>
+    <td><input type="number" name="credit[]" class="form-control num" value="${credit}" min="0" step="any" onchange="calcTotals()" style="width:130px"/></td>
+    <td><button type="button" onclick="this.closest('tr').remove();calcTotals()" class="btn btn-icon" style="color:var(--error)">
+      <span class="material-symbols-outlined" style="font-size:18px">delete</span></button></td>`;
+  tbody.appendChild(tr);
+  lineIdx++;
+}
+
+function calcTotals() {
+  let td=0, tc=0;
+  document.querySelectorAll('input[name="debit[]"]').forEach(i=>td+=parseFloat(i.value)||0);
+  document.querySelectorAll('input[name="credit[]"]').forEach(i=>tc+=parseFloat(i.value)||0);
+  document.getElementById('total-debit').textContent = td.toLocaleString('ar',{minimumFractionDigits:2});
+  document.getElementById('total-credit').textContent = tc.toLocaleString('ar',{minimumFractionDigits:2});
+  const bal = document.getElementById('balance-indicator');
+  if(Math.abs(td-tc)<0.001){bal.textContent='✅ متوازن';bal.style.color='var(--secondary)';}
+  else{bal.textContent=`⚠️ فرق: ${Math.abs(td-tc).toFixed(2)}`;bal.style.color='var(--error)';}
+}
+window.onload = () => { addLine(); addLine(); };
+</script>
+{% endblock %}
+{% block content %}
+<div class="page-header flex-between">
+  <div><h2>قيد يومية جديد</h2></div>
+  <a href="{{ url_for('accounts.journal') }}" class="btn btn-secondary"><span class="material-symbols-outlined">arrow_forward</span> العودة</a>
+</div>
+<form method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">التاريخ *</label>
+          <input type="date" name="date" class="form-control" value="{{ today }}" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">المرجع</label>
+          <input type="text" name="reference" class="form-control num" placeholder="سيُولَّد تلقائياً"/>
+        </div>
+        <div class="form-group" style="grid-column:span 2">
+          <label class="form-label">الوصف *</label>
+          <input type="text" name="description" class="form-control" required placeholder="وصف القيد..."/>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header flex-between">
+      <h4>بنود القيد</h4>
+      <button type="button" onclick="addLine()" class="btn btn-secondary btn-sm">
+        <span class="material-symbols-outlined">add</span> بند جديد
+      </button>
+    </div>
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead><tr><th>الحساب</th><th>البيان</th><th class="num">مدين</th><th class="num">دائن</th><th></th></tr></thead>
+        <tbody id="lines-body"></tbody>
+        <tfoot>
+          <tr style="background:var(--surface-low);font-weight:700">
+            <td colspan="2" style="padding:10px 14px;text-align:left">
+              <span id="balance-indicator" style="font-size:13px"></span>
+            </td>
+            <td class="num" style="padding:10px 14px"><span id="total-debit">0.00</span> ر.س</td>
+            <td class="num" style="padding:10px 14px"><span id="total-credit">0.00</span> ر.س</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="flex gap-2">
+    <button type="submit" class="btn btn-primary"><span class="material-symbols-outlined">save</span> حفظ القيد</button>
+    <a href="{{ url_for('accounts.journal') }}" class="btn btn-secondary">إلغاء</a>
+  </div>
+</form>
+{% endblock %}

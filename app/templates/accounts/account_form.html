@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+  <div><h2>{{ title }}</h2></div>
+  <a href="{{ url_for('accounts.index') }}" class="btn btn-secondary"><span class="material-symbols-outlined">arrow_forward</span> العودة</a>
+</div>
+<div class="card" style="max-width:560px">
+  <div class="card-body">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">كود الحساب *</label>
+          <input type="text" name="code" class="form-control num" value="{{ account.code if account else '' }}" required placeholder="1100"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">نوع الحساب *</label>
+          <select name="type" class="form-control" required>
+            <option value="asset" {{ 'selected' if account and account.type=='asset' }}>أصول</option>
+            <option value="liability" {{ 'selected' if account and account.type=='liability' }}>خصوم</option>
+            <option value="equity" {{ 'selected' if account and account.type=='equity' }}>حقوق ملكية</option>
+            <option value="revenue" {{ 'selected' if account and account.type=='revenue' }}>إيرادات</option>
+            <option value="expense" {{ 'selected' if account and account.type=='expense' }}>مصروفات</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">اسم الحساب (عربي) *</label>
+        <input type="text" name="name_ar" class="form-control" value="{{ account.name_ar if account else '' }}" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">اسم الحساب (إنجليزي)</label>
+        <input type="text" name="name_en" class="form-control" value="{{ account.name_en if account else '' }}"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">الحساب الأب</label>
+        <select name="parent_id" class="form-control">
+          <option value="">-- لا يوجد (حساب رئيسي) --</option>
+          {% for pa in parent_accounts %}
+          <option value="{{ pa.id }}" {{ 'selected' if account and account.parent_id == pa.id }}>{{ pa.code }} — {{ pa.name_ar }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">الوصف</label>
+        <textarea name="description" class="form-control" rows="2">{{ account.description if account else '' }}</textarea>
+      </div>
+      {% if account %}
+      <div class="form-group" style="display:flex;gap:8px;align-items:center">
+        <input type="checkbox" name="is_active" id="is_active" {{ 'checked' if account.is_active }}/>
+        <label for="is_active" class="form-label" style="margin:0">حساب نشط</label>
+      </div>
+      {% endif %}
+      <div class="flex gap-2"><button type="submit" class="btn btn-primary"><span class="material-symbols-outlined">save</span> حفظ</button>
+        <a href="{{ url_for('accounts.index') }}" class="btn btn-secondary">إلغاء</a></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

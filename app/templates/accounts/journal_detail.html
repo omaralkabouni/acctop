@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+  <div><h2>قيد {{ entry.reference }}</h2><p class="text-muted">{{ entry.date | fdate }} — {{ entry.description }}</p></div>
+  <div class="flex gap-2">
+    {% if entry.source == 'manual' %}
+    <form method="POST" action="{{ url_for('accounts.delete_journal_entry', entry_id=entry.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <button class="btn btn-danger" data-confirm="حذف القيد؟">حذف</button>
+    </form>
+    {% endif %}
+    <a href="{{ url_for('accounts.journal') }}" class="btn btn-secondary">العودة</a>
+  </div>
+</div>
+<div class="card">
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead><tr><th>الحساب</th><th>البيان</th><th class="num">مدين</th><th class="num">دائن</th></tr></thead>
+      <tbody>
+        {% for line in entry.lines %}
+        <tr>
+          <td><strong class="num">{{ line.account.code }}</strong> — {{ line.account.name_ar }}</td>
+          <td>{{ line.description or '—' }}</td>
+          <td class="num" style="color:var(--secondary)">{{ line.debit | currency if line.debit else '—' }}</td>
+          <td class="num" style="color:var(--error)">{{ line.credit | currency if line.credit else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="background:var(--surface-low);font-weight:700">
+          <td colspan="2" style="padding:10px 14px;text-align:left">
+            {% if entry.is_balanced %}<span style="color:var(--secondary)">✅ متوازن</span>{% else %}<span style="color:var(--error)">⚠️ غير متوازن</span>{% endif %}
+          </td>
+          <td class="num" style="padding:10px 14px">{{ entry.total_debit | currency }}</td>
+          <td class="num" style="padding:10px 14px">{{ entry.total_credit | currency }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="page-header flex-between">
+  <div><h2>{{ title }}</h2></div>
+  <a href="{{ url_for('vouchers.index') }}" class="btn btn-secondary">العودة</a>
+</div>
+
+<div class="card" style="max-width:600px">
+  <div class="card-body">
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      
+      <div class="form-group">
+        <label class="form-label">{{ 'العميل' if vtype == 'receipt' else 'المورد' }} *</label>
+        <select name="party_id" class="form-control searchable-select" required>
+          <option value="">-- اختر {{ 'العميل' if vtype == 'receipt' else 'المورد' }} --</option>
+          {% for p in parties %}
+          <option value="{{ p.id }}">{{ p.display_name }}</option>
+          {% endfor %}
+        </select>
+        <small class="form-text text-muted" style="margin-top:4px">
+          {% if vtype == 'receipt' %}
+          سيتم خصم هذا المبلغ تلقائياً من أقدم الفواتير غير المسددة للعميل.
+          {% else %}
+          سيتم خصم هذا المبلغ تلقائياً من فواتير المشتريات غير المسددة للمورد.
+          {% endif %}
+        </small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">المبلغ *</label>
+          <input type="number" name="amount" class="form-control num" min="0.01" step="any" required/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">التاريخ *</label>
+          <input type="date" name="date" class="form-control" value="{{ today }}" required/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">طريقة الدفع (الحساب) *</label>
+        <select name="account_id" class="form-control searchable-select" required>
+          <option value="">-- اختر طريقة الدفع --</option>
+          {% for acc in accounts %}
+          <option value="{{ acc.id }}">{{ acc.code }} — {{ acc.name_ar }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" id="reference-label">رقم المرجع (رقم الحوالة/الشيك)</label>
+        <input type="text" name="reference" id="reference-input" class="form-control" placeholder="اختياري"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ملاحظات / بيان</label>
+        <textarea name="notes" class="form-control" rows="2" placeholder="اختياري"></textarea>
+      </div>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          const accountSelect = document.querySelector('select[name="account_id"]');
+          const referenceInput = document.getElementById('reference-input');
+          const referenceLabel = document.getElementById('reference-label');
+
+          function updateReferenceRequirement() {
+            const selectedText = accountSelect.options[accountSelect.selectedIndex].text;
+            if (selectedText.includes('الشام كاش')) {
+              referenceInput.required = true;
+              referenceInput.placeholder = 'يجب إدخال رقم الإيصال';
+              referenceLabel.innerHTML = 'رقم الإيصال (إجباري للشام كاش) *';
+            } else {
+              referenceInput.required = false;
+              referenceInput.placeholder = 'اختياري';
+              referenceLabel.innerHTML = 'رقم المرجع (رقم الحوالة/الشيك)';
+            }
+          }
+
+          accountSelect.addEventListener('change', updateReferenceRequirement);
+          // Initial check
+          if (accountSelect.selectedIndex > 0) updateReferenceRequirement();
+        });
+      </script>
+
+      <div class="flex gap-2" style="margin-top:20px">
+        <button type="submit" class="btn btn-primary"><span class="material-symbols-outlined">save</span> حفظ وإصدار السند</button>
+        <a href="{{ url_for('vouchers.index') }}" class="btn btn-secondary">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

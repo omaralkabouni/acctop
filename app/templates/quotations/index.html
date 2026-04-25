@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+  <div>
+    <h2>عروض الأسعار</h2>
+    <p class="text-muted">إدارة عروض الأسعار المقدمة للعملاء</p>
+  </div>
+  <a href="{{ url_for('quotations.create') }}" class="btn btn-primary">
+    <span class="material-symbols-outlined">add</span> عرض سعر جديد
+  </a>
+</div>
+
+<div class="search-container" style="margin-bottom:20px">
+  <form method="GET" class="flex gap-2">
+    <input type="text" name="q" class="form-control" placeholder="بحث برقم العرض أو اسم العميل..." value="{{ search }}">
+    <button type="submit" class="btn btn-secondary">بحث</button>
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-wrapper">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>رقم العرض</th>
+          <th class="hide-mobile">التاريخ</th>
+          <th>العميل</th>
+          <th class="num">المبلغ</th>
+          <th class="hide-mobile">الحالة</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in quotations.items %}
+        <tr>
+          <td><span class="font-bold">{{ q.number }}</span></td>
+          <td class="num hide-mobile">{{ q.date | fdate }}</td>
+          <td>{{ q.party_display_name }}</td>
+          <td class="num">{{ q.total | currency }}</td>
+          <td class="hide-mobile"><span class="badge badge-{{ q.status_color }}">{{ q.status_ar if q.status != 'converted' else 'مُحول لفاتورة' }}</span></td>
+          <td>
+            <div class="flex gap-2">
+              <a href="{{ url_for('invoices.view', invoice_id=q.id) }}" class="btn btn-sm btn-secondary" title="عرض">
+                <span class="material-symbols-outlined" style="font-size:18px">visibility</span>
+              </a>
+              {% if q.status != 'converted' %}
+              <a href="{{ url_for('quotations.edit', quote_id=q.id) }}" class="btn btn-sm btn-warning" title="تعديل">
+                <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+              </a>
+              <a href="{{ url_for('quotations.convert', quote_id=q.id) }}" class="btn btn-sm btn-primary" onclick="return confirm('تحويل هذا العرض إلى فاتورة مبيعات حقيقية؟')">تحويل لفاتورة</a>
+              {% endif %}
+              {% if current_user.is_admin() %}
+              <form method="POST" action="{{ url_for('quotations.delete', quote_id=q.id) }}" onsubmit="return confirm('حذف العرض؟')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button class="btn btn-sm btn-danger">حذف</button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <span class="material-symbols-outlined">description</span>
+              <h3>لا توجد عروض أسعار</h3>
+              <a href="{{ url_for('quotations.create') }}" class="btn btn-primary">إضافة عرض جديد</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

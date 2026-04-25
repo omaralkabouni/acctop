@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}طباعة{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Reset & Base Styles */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: #f0f0f0;
+      color: #000;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    
+    /* Document Container */
+    .print-doc {
+      background: #fff;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* A4 Layout */
+    .layout-a4 {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 20mm;
+      margin: 20px auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    /* POS Layout (80mm is standard, 72mm printable area) */
+    .layout-pos {
+      width: 80mm;
+      padding: 4mm;
+      margin: 20px auto;
+      box-shadow: 0 0 5px rgba(0,0,0,0.2);
+      font-size: 12px;
+    }
+
+    /* Typography */
+    h1, h2, h3, h4 { margin-bottom: 8px; }
+    p { margin-bottom: 5px; }
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .text-left { text-align: left; }
+    .font-bold { font-weight: 700; }
+    .mb-1 { margin-bottom: 5px; }
+    .mb-2 { margin-bottom: 10px; }
+    .mb-3 { margin-bottom: 15px; }
+    .mb-4 { margin-bottom: 20px; }
+
+    /* Flex Utilities */
+    .flex { display: flex; }
+    .flex-between { justify-content: space-between; }
+    .items-center { align-items: center; }
+    .gap-2 { gap: 10px; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+    th, td { padding: 8px; border-bottom: 1px solid #ddd; text-align: right; }
+    th { background-color: #f8f9fa; font-weight: 600; }
+    .layout-pos th, .layout-pos td { padding: 4px; font-size: 11px; }
+    
+    /* A4 Table borders */
+    .layout-a4 table { border: 1px solid #000; }
+    .layout-a4 th, .layout-a4 td { border: 1px solid #000; }
+    .layout-a4 th { background-color: #f0f0f0; }
+
+    /* POS specific */
+    .pos-divider { border-top: 1px dashed #000; margin: 10px 0; }
+    
+    /* Print Media Query */
+    @media print {
+      body { background: #fff; margin: 0; }
+      .no-print { display: none !important; }
+      .layout-a4, .layout-pos {
+        margin: 0;
+        box-shadow: none;
+        padding: 0;
+      }
+      .layout-a4 { width: 100%; }
+      .layout-pos { width: 72mm; margin: 0 auto; }
+      
+      @page {
+        size: auto;
+        margin: 0mm;
+      }
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  {% block content %}{% endblock %}
+
+  <script>
+    window.onload = function() {
+      // Auto-print when loaded, but add a slight delay to ensure fonts are loaded
+      setTimeout(function() {
+        window.print();
+      }, 500);
+    };
+  </script>
+</body>
+</html>
