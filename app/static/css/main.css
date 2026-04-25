@@ -435,4 +435,38 @@ select.form-control { appearance: none; background-image: url("data:image/svg+xm
 .fade-in { animation: fadeIn 0.3s ease forwards; }
 .kpi-card, .card { animation: fadeIn 0.35s ease forwards; }
 
+/* TomSelect RTL & Styling Fixes */
+.ts-wrapper.form-control {
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+.ts-control {
+  border: none !important;
+  background: none !important;
+  padding: 8px 12px !important;
+  width: 100% !important;
+  font-family: 'Tajawal', sans-serif !important;
+  font-size: 14px !important;
+  color: var(--on-surface) !important;
+}
+.ts-dropdown {
+  z-index: 10000 !important;
+  font-family: 'Tajawal', sans-serif !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow-lg) !important;
+  border: 1px solid var(--outline-var) !important;
+}
+.ts-dropdown .active {
+  background-color: var(--surface-low) !important;
+  color: var(--primary) !important;
+}
+.ts-dropdown .option {
+  padding: 8px 12px !important;
+}
+.searchable-product-select + .ts-wrapper {
+  width: 100% !important;
+  min-width: 180px;
+}
+
 

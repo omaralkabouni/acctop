@@ -101,13 +101,22 @@ const InvoiceForm = {
     // Initialize TomSelect for the new row
     const sel = tr.querySelector('.searchable-product-select');
     if (sel && typeof TomSelect !== 'undefined') {
-      new TomSelect(sel, {
-        create: false,
-        sortField: { field: "text", direction: "asc" },
-        onChange: function(value) {
-          InvoiceForm.onProductChange(sel, idx, value);
-        }
-      });
+      try {
+        new TomSelect(sel, {
+          create: false,
+          maxOptions: 100,
+          searchField: ['text'], // Searches the text of the options
+          placeholder: '-- ابحث عن منتج --',
+          allowEmptyOption: true,
+          onChange: function(value) {
+            InvoiceForm.onProductChange(sel, idx, value);
+          },
+          // Ensure dropdown is not clipped by table
+          dropdownParent: 'body'
+        });
+      } catch (err) {
+        console.error("Error initializing TomSelect:", err);
+      }
     }
 
     this.calcLine(idx);
