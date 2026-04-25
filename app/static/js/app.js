@@ -137,6 +137,37 @@ const InvoiceForm = {
 
     const row = sel.closest('tr');
     if (row) {
+      // --- MERGE LOGIC ---
+      // Check if another row already has this product_id
+      let existingRow = null;
+      document.querySelectorAll('#invoice-lines-body tr').forEach(r => {
+        if (r !== row) {
+          const pId = r.querySelector('select[name="product_id[]"]')?.value;
+          if (pId == productId) {
+            existingRow = r;
+          }
+        }
+      });
+
+      if (existingRow) {
+        // Increment quantity of existing row
+        const qtyInput = existingRow.querySelector('input[name="qty[]"]');
+        const currentQty = parseFloat(row.querySelector('input[name="qty[]"]').value) || 1;
+        qtyInput.value = (parseFloat(qtyInput.value) || 0) + currentQty;
+        
+        // Trigger calculation for the existing row
+        // We need to find the ID/index or just call update on it.
+        // The easiest way is to trigger 'change' event on the qty input
+        qtyInput.dispatchEvent(new Event('change'));
+        
+        // Remove current row
+        row.remove();
+        this.updateTotals();
+        showToast('تم دمج الصنف مع البند الموجود مسبقاً', 'info');
+        return;
+      }
+      // --- END MERGE LOGIC ---
+
       row.querySelector('input[name="description[]"]').value = product.name_ar || product.name;
       const priceInput = document.getElementById(`price_${idx}`);
       if (priceInput) priceInput.value = parseFloat(product.unit_price.toFixed(2));
