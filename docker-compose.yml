@@ -13,6 +13,12 @@ services:
     environment:
       - SECRET_KEY=your-super-secret-key-change-this
       - DATABASE_URL=sqlite:///instance/erp_top.db
+      - GUNICORN_TIMEOUT=120
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   erp_data:

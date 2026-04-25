@@ -25,8 +25,11 @@ COPY . .
 # Create instance directory for SQLite
 RUN mkdir -p instance && chmod 777 instance
 
+# Make entrypoint executable
+RUN chmod +x entrypoint.sh
+
 # Expose port
 EXPOSE 5000
 
-# Start application with Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--threads", "2", "run:app"]
+# Use entrypoint script
+ENTRYPOINT ["./entrypoint.sh"]
