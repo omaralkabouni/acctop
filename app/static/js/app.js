@@ -84,7 +84,7 @@ const InvoiceForm = {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>
-        <select name="product_id[]" class="form-control searchable-product-select" style="min-width:140px" onchange="InvoiceForm.onProductChange(this, ${idx})">
+        <select name="product_id[]" class="form-control searchable-product-select" style="min-width:140px">
           <option value="">-- اختر منتجاً --</option>
           ${window.__products?.map(p => `<option value="${p.id}" data-price="${p.unit_price}" ${p.id==productId?'selected':''}>${p.name_ar||p.name}</option>`).join('')||''}
         </select>
@@ -155,10 +155,13 @@ const InvoiceForm = {
         const currentQty = parseFloat(row.querySelector('input[name="qty[]"]').value) || 1;
         qtyInput.value = (parseFloat(qtyInput.value) || 0) + currentQty;
         
-        // Trigger calculation for the existing row
-        // We need to find the ID/index or just call update on it.
-        // The easiest way is to trigger 'change' event on the qty input
-        qtyInput.dispatchEvent(new Event('change'));
+        // Find the index of the existing row to recalculate it
+        // The index is usually in the ID of the total column: linetotal_{idx}
+        const totalCell = existingRow.querySelector('.line-total');
+        if (totalCell && totalCell.id) {
+          const existingIdx = totalCell.id.replace('linetotal_', '');
+          this.calcLine(existingIdx);
+        }
         
         // Remove current row
         row.remove();

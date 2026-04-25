@@ -47,23 +47,23 @@
 
 <script>
 async function sendToN8N() {
-  if (!confirm('هل تريد إرسال كشف الحساب الحالي إلى العميل عبر n8n؟')) return;
-  
-  try {
-    const response = await fetch("{{ url_for('parties.api_send_statement', party_id=party.id) }}", {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}' }
-    });
-    
-    const result = await response.json();
-    if (result.success) {
-      alert('تم إرسال الطلب إلى n8n بنجاح!');
-    } else {
-      alert('خطأ: ' + (result.error || 'حدث خطأ أثناء الإرسال'));
+  showConfirm('هل تريد إرسال كشف الحساب الحالي إلى العميل؟', async () => {
+    try {
+      const response = await fetch("{{ url_for('parties.api_send_statement', party_id=party.id) }}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}' }
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        showToast('تم إرسال الطلب بنجاح!', 'success');
+      } else {
+        showToast('خطأ: ' + (result.error || 'حدث خطأ أثناء الإرسال'), 'error');
+      }
+    } catch (err) {
+      showToast('خطأ في الاتصال بالخادم', 'error');
     }
-  } catch (err) {
-    alert('خطأ في الاتصال بالخادم');
-  }
+  });
 }
 </script>
 {% endblock %}
