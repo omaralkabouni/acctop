@@ -1,8 +1,7 @@
 {% extends 'base.html' %}
 {% block extra_js %}
 <script>
-window.__products = {{ products | map(attribute='id') | list | tojson }};
-// Rebuild products list for JS
+// Build products list for JS
 window.__products = [
   {% for p in products %}
   {id: {{ p.id }}, name: {{ p.name | tojson }}, name_ar: {{ (p.name_ar or p.name) | tojson }}, unit_price: {{ p.unit_price | float }}},

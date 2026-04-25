@@ -105,7 +105,7 @@ const InvoiceForm = {
         create: false,
         sortField: { field: "text", direction: "asc" },
         onChange: function(value) {
-          InvoiceForm.onProductChange(sel, idx);
+          InvoiceForm.onProductChange(sel, idx, value);
         }
       });
     }
@@ -113,13 +113,25 @@ const InvoiceForm = {
     this.calcLine(idx);
   },
 
-  onProductChange(sel, idx) {
-    const opt = sel.options[sel.selectedIndex];
-    const price = parseFloat(opt.dataset.price || 0);
-    const desc = opt.text !== '-- اختر منتجاً --' ? opt.text : '';
+  onProductChange(sel, idx, val = null) {
+    const productId = val || sel.value;
+    if (!productId) return;
+    
+    // Ensure we have the list
+    if (!window.__products || window.__products.length === 0) {
+      console.warn("Products list is empty or not loaded yet.");
+      return;
+    }
+
+    const product = window.__products.find(p => p.id == productId);
+    if (!product) return;
+
     const row = sel.closest('tr');
-    row.querySelector('input[name="description[]"]').value = desc;
-    document.getElementById(`price_${idx}`).value = parseFloat(price.toFixed(2));
+    if (row) {
+      row.querySelector('input[name="description[]"]').value = product.name_ar || product.name;
+      const priceInput = document.getElementById(`price_${idx}`);
+      if (priceInput) priceInput.value = parseFloat(product.unit_price.toFixed(2));
+    }
     this.calcLine(idx);
   },
 
