@@ -10,7 +10,7 @@ window.__products = [
 document.addEventListener('DOMContentLoaded', () => {
   {% if invoice and invoice.lines.count() > 0 %}
     {% for line in invoice.lines %}
-    InvoiceForm.addLine({{ line.product_id or 'null' }}, {{ line.description | tojson }}, {{ line.unit_price | float }});
+    InvoiceForm.addLine({{ line.product_id or 'null' }}, {{ line.description | tojson }}, {{ line.unit_price | float }}, {{ line.qty | float }}, {{ line.discount_pct | float }});
     {% endfor %}
   {% else %}
     InvoiceForm.addLine();

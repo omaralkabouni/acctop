@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
 const InvoiceForm = {
   lineCount: 0,
 
-  addLine(productId = '', productName = '', unitPrice = 0) {
+  addLine(productId = '', productName = '', unitPrice = 0, qty = 1, discount = 0) {
     const tbody = document.getElementById('invoice-lines-body');
     if (!tbody) return;
     const idx = this.lineCount++;
@@ -90,9 +90,9 @@ const InvoiceForm = {
         </select>
       </td>
       <td><input type="text" name="description[]" class="form-control" value="${productName}" placeholder="الوصف" required style="min-width:160px"/></td>
-      <td><input type="number" name="qty[]" class="form-control num" value="1" min="0.001" step="any" onchange="InvoiceForm.calcLine(${idx})" style="width:80px"/></td>
+      <td><input type="number" name="qty[]" class="form-control num" value="${qty}" min="0.001" step="any" onchange="InvoiceForm.calcLine(${idx})" style="width:80px"/></td>
       <td><input type="number" name="unit_price[]" id="price_${idx}" class="form-control num" value="${unitPrice}" min="0" step="any" onchange="InvoiceForm.calcLine(${idx})" style="width:110px"/></td>
-      <td><input type="number" name="line_discount[]" class="form-control num" value="0" min="0" max="100" step="any" onchange="InvoiceForm.calcLine(${idx})" style="width:70px"/></td>
+      <td><input type="number" name="line_discount[]" class="form-control num" value="${discount}" min="0" max="100" step="any" onchange="InvoiceForm.calcLine(${idx})" style="width:70px"/></td>
       <td class="num line-total" id="linetotal_${idx}">0.00</td>
       <td><button type="button" class="btn btn-icon" style="color:var(--error)" onclick="this.closest('tr').remove();InvoiceForm.updateTotals()">
         <span class="material-symbols-outlined" style="font-size:18px">delete</span></button></td>`;
