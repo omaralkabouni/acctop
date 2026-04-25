@@ -249,6 +249,41 @@ def edit(invoice_id):
                            invoice=invoice, customers=customers, products=products)
 
 
+@invoices_bp.route('/<int:invoice_id>/post', methods=['POST'])
+@login_required
+@permission_required('invoices')
+def post_invoice(invoice_id):
+    invoice = Invoice.query.get_or_404(invoice_id)
+    if invoice.status != 'draft':
+        flash('يمكن اعتماد الفواتير المسودة فقط', 'error')
+        return redirect(url_for('invoices.view', invoice_id=invoice_id))
+
+    invoice.status = 'sent'
+    entry = _create_invoice_journal(invoice)
+    if entry:
+        invoice.journal_entry_id = entry.id
+        
+    # Update Inventory (Stock OUT)
+    for line in invoice.lines:
+        if line.product_id:
+            prod = Product.query.get(line.product_id)
+            prod.stock_qty = float(prod.stock_qty) - float(line.qty)
+            
+            db.session.add(InventoryMovement(
+                product_id=line.product_id, type='out', qty=line.qty,
+                unit_cost=prod.cost_price, reference=invoice.number,
+                notes=f'مبيعات: {invoice.party.display_name if invoice.party else "عميل نقدي"}',
+                created_by=current_user.id
+            ))
+
+    db.session.commit()
+    log_action(current_user.id, 'update', 'Invoice', invoice.id, 
+               old_values={'status': 'draft'}, new_values={'status': 'sent'})
+    flash('تم اعتماد الفاتورة بنجاح وتحديث المخزون', 'success')
+    return redirect(url_for('invoices.view', invoice_id=invoice_id))
+
+
+
 @invoices_bp.route('/<int:invoice_id>/pay', methods=['POST'])
 @login_required
 @permission_required('invoices')

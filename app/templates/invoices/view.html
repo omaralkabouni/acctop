@@ -12,7 +12,15 @@
     <a href="{{ url_for('invoices.print_invoice', invoice_id=invoice.id, layout='pos') }}" target="_blank" class="btn btn-secondary">
       <span class="material-symbols-outlined">receipt</span> طباعة إيصال 72mm
     </a>
-    {% if invoice.status != 'paid' %}
+    {% if invoice.status == 'draft' %}
+    <form method="POST" action="{{ url_for('invoices.post_invoice', invoice_id=invoice.id) }}" style="display:inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <button class="btn btn-primary" data-confirm="هل أنت متأكد من اعتماد الفاتورة؟ سيتم خصم الكميات من المخزون وإنشاء القيود المحاسبية ولن تتمكن من تعديل الفاتورة لاحقاً.">
+        <span class="material-symbols-outlined">send</span> اعتماد الفاتورة
+      </button>
+    </form>
+    {% endif %}
+    {% if invoice.status != 'paid' and invoice.status != 'sent' %}
     <a href="{{ url_for('invoices.edit', invoice_id=invoice.id) }}" class="btn btn-secondary">تعديل</a>
     {% endif %}
     {% if current_user.is_admin() %}
