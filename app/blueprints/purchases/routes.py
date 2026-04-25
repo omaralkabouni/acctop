@@ -137,6 +137,115 @@ def create():
 
     return render_template('purchases/form.html', title='فاتورة مشتريات جديدة', suppliers=suppliers, products=products)
 
+
+@purchases_bp.route('/<int:purchase_id>')
+@login_required
+def view(purchase_id):
+    purchase = Invoice.query.filter_by(id=purchase_id, type='purchase').first_or_404()
+    return render_template('purchases/view.html', title=f'فاتورة مشتريات {purchase.number}', purchase=purchase)
+
+
+@purchases_bp.route('/<int:purchase_id>/edit', methods=['GET', 'POST'])
+@login_required
+@permission_required('invoices')
+def edit(purchase_id):
+    purchase = Invoice.query.filter_by(id=purchase_id, type='purchase').first_or_404()
+    
+    # Allow editing even if sent, but handle reversal
+    suppliers = Party.query.filter(Party.type.in_(['supplier', 'both']), Party.is_active == True).all()
+    products = Product.query.filter_by(is_active=True).all()
+
+    if request.method == 'POST':
+        # If it was sent, we need to REVERSE the impact before deleting old lines
+        if purchase.status != 'draft':
+            for line in purchase.lines:
+                if line.product_id:
+                    prod = Product.query.get(line.product_id)
+                    # For purchase, we subtract what we added
+                    prod.stock_qty = float(prod.stock_qty) - float(line.qty)
+            
+            # Delete associated movements and journal
+            InventoryMovement.query.filter_by(reference=purchase.number).delete()
+            if purchase.journal_entry_id:
+                JournalLine.query.filter_by(entry_id=purchase.journal_entry_id).delete()
+                JournalEntry.query.filter_by(id=purchase.journal_entry_id).delete()
+                purchase.journal_entry_id = None
+            
+            purchase.status = 'draft' # Reset to draft after editing a sent one
+
+        purchase.party_id = request.form.get('party_id', type=int)
+        inv_date_str = request.form.get('date')
+        if inv_date_str:
+            purchase.date = datetime.strptime(inv_date_str, '%Y-%m-%d').date()
+        purchase.supplier_invoice_number = request.form.get('supplier_invoice_number')
+        purchase.tax_rate = request.form.get('tax_rate', 15, type=float)
+        purchase.discount_pct = request.form.get('discount_pct', 0, type=float)
+        purchase.notes = request.form.get('notes', '')
+
+        # Delete existing lines
+        InvoiceLine.query.filter_by(invoice_id=purchase.id).delete()
+
+        product_ids = request.form.getlist('product_id[]')
+        descriptions = request.form.getlist('description[]')
+        qtys = request.form.getlist('qty[]')
+        prices = request.form.getlist('unit_price[]')
+
+        for i, desc in enumerate(descriptions):
+            if not desc.strip(): continue
+            line = InvoiceLine(
+                invoice_id=purchase.id,
+                product_id=int(product_ids[i]) if product_ids[i] else None,
+                description=desc.strip(),
+                qty=float(qtys[i] or 1),
+                unit_price=float(prices[i] or 0),
+                discount_pct=0,
+            )
+            line.recalculate()
+            db.session.add(line)
+
+        db.session.flush()
+        purchase.recalculate()
+        db.session.commit()
+        flash('تم تحديث الفاتورة بنجاح وإعادتها لحالة المسودة للمراجعة', 'info')
+        return redirect(url_for('purchases.view', purchase_id=purchase.id))
+
+    return render_template('purchases/form.html', title='تعديل فاتورة مشتريات',
+                           purchase=purchase, suppliers=suppliers, products=products)
+
+
+@purchases_bp.route('/<int:purchase_id>/post', methods=['POST'])
+@login_required
+@permission_required('invoices')
+def post_purchase(purchase_id):
+    purchase = Invoice.query.filter_by(id=purchase_id, type='purchase').first_or_404()
+    if purchase.status != 'draft':
+        flash('الفاتورة معتمدة مسبقاً', 'error')
+        return redirect(url_for('purchases.view', purchase_id=purchase_id))
+
+    purchase.status = 'sent'
+    entry = _create_purchase_journal(purchase)
+    if entry:
+        purchase.journal_entry_id = entry.id
+        
+    # Update Inventory (Stock IN)
+    for line in purchase.lines:
+        if line.product_id:
+            prod = Product.query.get(line.product_id)
+            prod.stock_qty = float(prod.stock_qty) + float(line.qty)
+            prod.cost_price = float(line.unit_price) # Update cost to latest purchase price
+            
+            db.session.add(InventoryMovement(
+                product_id=line.product_id, type='in', qty=line.qty,
+                unit_cost=line.unit_price, reference=purchase.number,
+                notes=f'مشتريات: {purchase.party.display_name}',
+                created_by=current_user.id
+            ))
+
+    db.session.commit()
+    flash('تم اعتماد الفاتورة وتحديث المخزون', 'success')
+    return redirect(url_for('purchases.view', purchase_id=purchase_id))
+
+
 @purchases_bp.route('/<int:purchase_id>/delete', methods=['POST'])
 @login_required
 @role_required('admin')

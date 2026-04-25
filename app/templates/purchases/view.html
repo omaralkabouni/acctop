@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+  <div>
+    <h2>فاتورة مشتريات رقم {{ purchase.number }}</h2>
+    <p class="text-muted">{{ purchase.date | fdate }} — {{ purchase.party.display_name if purchase.party else '' }}</p>
+  </div>
+  <div class="flex gap-2">
+    {% if purchase.status == 'draft' %}
+    <form method="POST" action="{{ url_for('purchases.post_purchase', purchase_id=purchase.id) }}" style="display:inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <button class="btn btn-primary" data-confirm="هل أنت متأكد من اعتماد الفاتورة؟ سيتم إضافة الكميات للمخزون وإنشاء القيود المحاسبية.">
+        <span class="material-symbols-outlined">send</span> اعتماد الفاتورة
+      </button>
+    </form>
+    {% endif %}
+    <a href="{{ url_for('purchases.edit', purchase_id=purchase.id) }}" class="btn btn-secondary">تعديل</a>
+    {% if current_user.is_admin() %}
+    <form method="POST" action="{{ url_for('purchases.delete', purchase_id=purchase.id) }}" style="display:inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <button class="btn btn-danger" data-confirm="حذف الفاتورة {{ purchase.number }}؟">حذف</button>
+    </form>
+    {% endif %}
+    <a href="{{ url_for('purchases.index') }}" class="btn btn-ghost">العودة</a>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:20px">
+  <div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-body">
+        <div class="form-row">
+          <div>
+            <p class="kpi-label">المورد</p>
+            <p style="font-weight:700">{{ purchase.party.display_name if purchase.party else '—' }}</p>
+          </div>
+          <div>
+            <p class="kpi-label">رقم الفاتورة (النظام)</p>
+            <p style="font-weight:700;font-family:'Inter'">{{ purchase.number }}</p>
+            {% if purchase.supplier_invoice_number %}
+            <p class="kpi-label" style="margin-top:12px">رقم فاتورة المورد</p>
+            <p style="font-family:'Inter'">{{ purchase.supplier_invoice_number }}</p>
+            {% endif %}
+          </div>
+          <div>
+            <p class="kpi-label">التاريخ</p>
+            <p style="font-family:'Inter'">{{ purchase.date | fdate }}</p>
+            <p class="kpi-label" style="margin-top:12px">الحالة</p>
+            <span class="badge badge-{{ purchase.status_color }}" style="font-size:14px">{{ purchase.status_ar }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>الوصف</th>
+              <th class="num">الكمية</th>
+              <th class="num">سعر الوحدة</th>
+              <th class="num">خصم %</th>
+              <th class="num">الإجمالي</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for line in purchase.lines %}
+            <tr>
+              <td class="num">{{ loop.index }}</td>
+              <td>{{ line.description }}</td>
+              <td class="num">{{ line.qty }}</td>
+              <td class="num">{{ line.unit_price | currency }}</td>
+              <td class="num">{{ line.discount_pct }}%</td>
+              <td class="num" style="font-weight:700">{{ line.total | currency }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="card-footer">
+        <div class="invoice-summary" style="max-width:300px;margin-right:auto">
+          <div class="summary-row"><span>المجموع الفرعي</span><span class="num">{{ purchase.subtotal | currency }}</span></div>
+          {% if purchase.discount_amount > 0 %}
+          <div class="summary-row"><span>الخصم ({{ purchase.discount_pct }}%)</span><span class="num">- {{ purchase.discount_amount | currency }}</span></div>
+          {% endif %}
+          {% if purchase.tax_amount > 0 %}
+          <div class="summary-row"><span>الضريبة ({{ purchase.tax_rate }}%)</span><span class="num">{{ purchase.tax_amount | currency }}</span></div>
+          {% endif %}
+          <div class="summary-row total"><span>الإجمالي</span><span class="num">{{ purchase.total | currency }}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    {% if purchase.notes %}
+    <div class="card">
+      <div class="card-header"><h4>ملاحظات</h4></div>
+      <div class="card-body"><p style="font-size:14px">{{ purchase.notes }}</p></div>
+    </div>
+    {% endif %}
+    
+    {% if purchase.journal_entry %}
+    <div class="card" style="margin-top:16px">
+      <div class="card-header"><h4>القيد المحاسبي</h4></div>
+      <div class="card-body">
+        <a href="{{ url_for('accounts.view_journal_entry', entry_id=purchase.journal_entry.id) }}" class="btn btn-ghost">{{ purchase.journal_entry.reference }}</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

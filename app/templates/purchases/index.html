@@ -34,25 +34,27 @@
         </tr>
       </thead>
       <tbody>
-        {% for pur in purchases.items %}
+        {% for p in purchases.items %}
         <tr>
+          <td class="num">{{ p.number }}</td>
+          <td class="num">{{ p.date | fdate }}</td>
+          <td>{{ p.party.display_name if p.party else '—' }}</td>
+          <td class="num">{{ p.total | currency }}</td>
+          <td><span class="badge badge-{{ p.status_color }}">{{ p.status_ar }}</span></td>
           <td>
-            <span class="font-bold">{{ pur.number }}</span>
-            {% if pur.supplier_invoice_number %}
-            <br><small class="text-muted">مورد: {{ pur.supplier_invoice_number }}</small>
-            {% endif %}
-          </td>
-          <td class="num">{{ pur.date | fdate }}</td>
-          <td>{{ pur.party.display_name }}</td>
-          <td class="num">{{ pur.total | currency }}</td>
-          <td><span class="badge badge-{{ pur.status_color }}">{{ pur.status_ar }}</span></td>
-          <td>
-            <div class="flex gap-2">
-              <a href="{{ url_for('invoices.view', invoice_id=pur.id) }}" class="btn btn-sm btn-secondary">عرض</a>
+            <div class="flex gap-1">
+              <a href="{{ url_for('purchases.view', purchase_id=p.id) }}" class="btn btn-icon" title="عرض">
+                <span class="material-symbols-outlined" style="font-size:18px">visibility</span>
+              </a>
+              <a href="{{ url_for('purchases.edit', purchase_id=p.id) }}" class="btn btn-icon" title="تعديل">
+                <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+              </a>
               {% if current_user.is_admin() %}
-              <form method="POST" action="{{ url_for('purchases.delete', purchase_id=pur.id) }}" onsubmit="return confirm('حذف الفاتورة؟')">
+              <form method="POST" action="{{ url_for('purchases.delete', purchase_id=p.id) }}" style="display:inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <button class="btn btn-sm btn-danger">حذف</button>
+                <button class="btn btn-icon" style="color:var(--error)" data-confirm="حذف الفاتورة {{ p.number }}؟" title="حذف">
+                  <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+                </button>
               </form>
               {% endif %}
             </div>
