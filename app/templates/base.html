@@ -7,6 +7,17 @@
   <title>{% block title %}{{ title or 'ERP TOP' }}{% endblock %} — ERP TOP</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@400,0&display=swap"/>
+  {% if sys_settings and sys_settings.primary_color %}
+  <style>
+    :root {
+      --primary: {{ sys_settings.primary_color }};
+      --primary-dark: {{ sys_settings.primary_color }};
+      --secondary: {{ sys_settings.secondary_color or '#006c49' }};
+      --secondary-light: {{ sys_settings.secondary_color or '#006c49' }};
+      --success: {{ sys_settings.secondary_color or '#006c49' }};
+    }
+  </style>
+  {% endif %}
   {% block extra_css %}{% endblock %}
 </head>
 <body>

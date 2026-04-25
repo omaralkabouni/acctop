@@ -14,6 +14,8 @@ class SystemSettings(db.Model):
     exchange_rate = db.Column(db.Float, default=1.0)
     n8n_webhook_url = db.Column(db.String(500), nullable=True)
     n8n_api_key = db.Column(db.String(200), nullable=True)
+    primary_color = db.Column(db.String(10), default='#131b2e')
+    secondary_color = db.Column(db.String(10), default='#006c49')
     
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

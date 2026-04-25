@@ -23,6 +23,8 @@ def index():
         settings.currency_symbol = request.form.get('currency_symbol', settings.currency_symbol).strip()
         settings.exchange_rate = float(request.form.get('exchange_rate', settings.exchange_rate))
         settings.n8n_webhook_url = request.form.get('n8n_webhook_url', settings.n8n_webhook_url).strip()
+        settings.primary_color = request.form.get('primary_color', settings.primary_color)
+        settings.secondary_color = request.form.get('secondary_color', settings.secondary_color)
         
         # Handle Logo Upload
         if 'company_logo' in request.files:

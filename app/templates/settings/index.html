@@ -32,6 +32,24 @@
           </div>
           <p class="text-muted" style="font-size:12px">يُفضل استخدام صورة بخلفية شفافة (PNG) وبأبعاد مربعة.</p>
         </div>
+
+        <div class="form-row" style="margin-top:16px">
+          <div class="form-group">
+            <label class="form-label">اللون الأساسي (Primary)</label>
+            <div style="display:flex;align-items:center;gap:12px">
+              <input type="color" name="primary_color" class="form-control" value="{{ settings.primary_color }}" style="width:60px;height:40px;padding:2px;cursor:pointer"/>
+              <span class="num" style="font-size:14px;color:var(--outline)">{{ settings.primary_color }}</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">لون النجاح/التمييز (Secondary)</label>
+            <div style="display:flex;align-items:center;gap:12px">
+              <input type="color" name="secondary_color" class="form-control" value="{{ settings.secondary_color }}" style="width:60px;height:40px;padding:2px;cursor:pointer"/>
+              <span class="num" style="font-size:14px;color:var(--outline)">{{ settings.secondary_color }}</span>
+            </div>
+          </div>
+        </div>
+        <p class="text-muted" style="font-size:12px;margin-top:8px">هذه الألوان ستؤثر على القوائم، الأزرار، واللمسات الجمالية في النظام.</p>
       </div>
     </div>
 
