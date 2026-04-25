@@ -60,6 +60,7 @@ def seed_data():
         {'code': '1000', 'name_ar': 'الأصول', 'name_en': 'Assets', 'type': 'asset', 'parent_code': None},
         {'code': '1100', 'name_ar': 'الأصول المتداولة', 'name_en': 'Current Assets', 'type': 'asset', 'parent_code': '1000'},
         {'code': '1110', 'name_ar': 'النقدية والبنوك', 'name_en': 'Cash & Banks', 'type': 'asset', 'parent_code': '1100'},
+        {'code': '1111', 'name_ar': 'شام كاش', 'name_en': 'Sham Cash', 'type': 'asset', 'parent_code': '1100'},
         {'code': '1120', 'name_ar': 'الذمم المدينة', 'name_en': 'Accounts Receivable', 'type': 'asset', 'parent_code': '1100'},
         {'code': '1130', 'name_ar': 'المخزون', 'name_en': 'Inventory', 'type': 'asset', 'parent_code': '1100'},
         {'code': '1200', 'name_ar': 'الأصول الثابتة', 'name_en': 'Fixed Assets', 'type': 'asset', 'parent_code': '1000'},
