@@ -84,7 +84,7 @@ const InvoiceForm = {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>
-        <select name="product_id[]" class="form-control" style="min-width:140px" onchange="InvoiceForm.onProductChange(this, ${idx})">
+        <select name="product_id[]" class="form-control searchable-product-select" style="min-width:140px" onchange="InvoiceForm.onProductChange(this, ${idx})">
           <option value="">-- اختر منتجاً --</option>
           ${window.__products?.map(p => `<option value="${p.id}" data-price="${p.unit_price}" ${p.id==productId?'selected':''}>${p.name_ar||p.name}</option>`).join('')||''}
         </select>
@@ -97,6 +97,19 @@ const InvoiceForm = {
       <td><button type="button" class="btn btn-icon" style="color:var(--error)" onclick="this.closest('tr').remove();InvoiceForm.updateTotals()">
         <span class="material-symbols-outlined" style="font-size:18px">delete</span></button></td>`;
     tbody.appendChild(tr);
+    
+    // Initialize TomSelect for the new row
+    const sel = tr.querySelector('.searchable-product-select');
+    if (sel && typeof TomSelect !== 'undefined') {
+      new TomSelect(sel, {
+        create: false,
+        sortField: { field: "text", direction: "asc" },
+        onChange: function(value) {
+          InvoiceForm.onProductChange(sel, idx);
+        }
+      });
+    }
+
     this.calcLine(idx);
   },
 

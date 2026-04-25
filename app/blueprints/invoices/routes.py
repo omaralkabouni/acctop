@@ -1,5 +1,5 @@
 """Invoices routes — full CRUD with line items, payments, and accounting entries."""
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from flask import render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 
@@ -175,8 +175,11 @@ def create():
         flash(f'تم إنشاء الفاتورة {invoice.number} بنجاح', 'success')
         return redirect(url_for('invoices.view', invoice_id=invoice.id))
 
+    today = date.today()
+    default_due = today + timedelta(days=3)
     return render_template('invoices/form.html', title='فاتورة جديدة',
-                           invoice=None, customers=customers, products=products)
+                           invoice=None, customers=customers, products=products,
+                           today=today, default_due=default_due)
 
 
 @invoices_bp.route('/<int:invoice_id>')

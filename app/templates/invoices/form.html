@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="form-group">
             <label class="form-label">تاريخ الاستحقاق</label>
-            <input type="date" name="due_date" class="form-control" value="{{ invoice.due_date | fdate if invoice and invoice.due_date else '' }}"/>
+            <input type="date" name="due_date" class="form-control" value="{{ invoice.due_date | fdate if invoice and invoice.due_date else (default_due | fdate if default_due else '') }}"/>
           </div>
         </div>
         <div class="form-group">
