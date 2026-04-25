@@ -24,10 +24,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Confirm delete modals
+  // Confirm modals (using custom application modal)
   document.querySelectorAll('[data-confirm]').forEach(el => {
     el.addEventListener('click', e => {
-      if (!confirm(el.dataset.confirm || 'هل أنت متأكد؟')) e.preventDefault();
+      e.preventDefault();
+      const message = el.dataset.confirm || 'هل أنت متأكد من هذا الإجراء؟';
+      
+      showConfirm(message, () => {
+        // If it's a button inside a form, submit the form
+        const form = el.closest('form');
+        if (form) {
+          form.submit();
+        } else if (el.tagName === 'A') {
+          // If it's a link, follow the link
+          window.location.href = el.href;
+        }
+      });
     });
   });
 
