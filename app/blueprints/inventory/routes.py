@@ -1,5 +1,5 @@
 """Inventory routes — product and stock management."""
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
 
 from . import inventory_bp
@@ -49,7 +49,10 @@ def create_product():
             # Add timestamp to avoid collisions
             from datetime import datetime
             image_filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{image_filename}"
-            upload_path = os.path.join('app', 'static', 'uploads', 'products', image_filename)
+            upload_dir = os.path.join(current_app.static_folder, 'uploads', 'products')
+            if not os.path.exists(upload_dir):
+                os.makedirs(upload_dir, exist_ok=True)
+            upload_path = os.path.join(upload_dir, image_filename)
             image_file.save(upload_path)
 
         product = Product(
@@ -100,7 +103,10 @@ def edit_product(product_id):
             image_filename = secure_filename(image_file.filename)
             from datetime import datetime
             image_filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{image_filename}"
-            upload_path = os.path.join('app', 'static', 'uploads', 'products', image_filename)
+            upload_dir = os.path.join(current_app.static_folder, 'uploads', 'products')
+            if not os.path.exists(upload_dir):
+                os.makedirs(upload_dir, exist_ok=True)
+            upload_path = os.path.join(upload_dir, image_filename)
             image_file.save(upload_path)
             product.image = image_filename
 
