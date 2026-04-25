@@ -248,8 +248,11 @@ def edit(invoice_id):
         flash('تم تحديث الفاتورة بنجاح', 'success')
         return redirect(url_for('invoices.view', invoice_id=invoice.id))
 
+    today = date.today()
+    default_due = today + timedelta(days=3)
     return render_template('invoices/form.html', title='تعديل الفاتورة',
-                           invoice=invoice, customers=customers, products=products)
+                           invoice=invoice, customers=customers, products=products,
+                           today=today, default_due=default_due)
 
 
 @invoices_bp.route('/<int:invoice_id>/post', methods=['POST'])
