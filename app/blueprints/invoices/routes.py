@@ -202,6 +202,26 @@ def edit(invoice_id):
     products = Product.query.filter_by(is_active=True).all()
 
     if request.method == 'POST':
+        # --- REVERSAL LOGIC FOR POSTED INVOICES ---
+        if invoice.status != 'draft':
+            for line in invoice.lines:
+                if line.product_id:
+                    prod = Product.query.get(line.product_id)
+                    # For sales, we ADD back what we subtracted
+                    prod.stock_qty = float(prod.stock_qty) + float(line.qty)
+            
+            # Delete associated movements and journal
+            from ...models.product import InventoryMovement
+            from ...models.transaction import JournalEntry, JournalLine
+            InventoryMovement.query.filter_by(reference=invoice.number).delete()
+            if invoice.journal_entry_id:
+                JournalLine.query.filter_by(entry_id=invoice.journal_entry_id).delete()
+                JournalEntry.query.filter_by(id=invoice.journal_entry_id).delete()
+                invoice.journal_entry_id = None
+            
+            invoice.status = 'draft' # Reset to draft after editing a posted one
+        # --- END REVERSAL LOGIC ---
+
         old_total = float(invoice.total)
         party_id = request.form.get('party_id', type=int)
         if not party_id:
@@ -231,7 +251,7 @@ def edit(invoice_id):
                 continue
             line = InvoiceLine(
                 invoice_id=invoice.id,
-                product_id=int(product_ids[i]) if product_ids[i] else None,
+                product_id=int(product_ids[i]) if i < len(product_ids) and product_ids[i] else None,
                 description=desc.strip(),
                 qty=float(qtys[i] or 1),
                 unit_price=float(prices[i] or 0),
@@ -245,7 +265,7 @@ def edit(invoice_id):
         db.session.commit()
         log_action(current_user.id, 'update', 'Invoice', invoice.id,
                    old_values={'total': old_total}, new_values={'total': float(invoice.total)})
-        flash('تم تحديث الفاتورة بنجاح', 'success')
+        flash('تم تحديث الفاتورة بنجاح وإعادتها لحالة المسودة للمراجعة', 'info')
         return redirect(url_for('invoices.view', invoice_id=invoice.id))
 
     today = date.today()

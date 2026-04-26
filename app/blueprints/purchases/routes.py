@@ -93,12 +93,14 @@ def create():
         descriptions = request.form.getlist('description[]')
         qtys = request.form.getlist('qty[]')
         prices = request.form.getlist('unit_price[]')
+        selling_prices = request.form.getlist('selling_price[]')
 
         for i, desc in enumerate(descriptions):
             if not desc.strip(): continue
+            p_id = int(product_ids[i]) if i < len(product_ids) and product_ids[i] else None
             line = InvoiceLine(
                 invoice_id=invoice.id,
-                product_id=int(product_ids[i]) if product_ids[i] else None,
+                product_id=p_id,
                 description=desc.strip(),
                 qty=float(qtys[i] or 1),
                 unit_price=float(prices[i] or 0),
@@ -106,6 +108,12 @@ def create():
             )
             line.recalculate()
             db.session.add(line)
+            
+            # Update selling price of the product if provided
+            if p_id and i < len(selling_prices) and selling_prices[i]:
+                prod = Product.query.get(p_id)
+                if prod:
+                    prod.unit_price = float(selling_prices[i])
 
         db.session.flush()
         invoice.recalculate()
@@ -189,12 +197,14 @@ def edit(purchase_id):
         descriptions = request.form.getlist('description[]')
         qtys = request.form.getlist('qty[]')
         prices = request.form.getlist('unit_price[]')
+        selling_prices = request.form.getlist('selling_price[]')
 
         for i, desc in enumerate(descriptions):
             if not desc.strip(): continue
+            p_id = int(product_ids[i]) if i < len(product_ids) and product_ids[i] else None
             line = InvoiceLine(
                 invoice_id=purchase.id,
-                product_id=int(product_ids[i]) if product_ids[i] else None,
+                product_id=p_id,
                 description=desc.strip(),
                 qty=float(qtys[i] or 1),
                 unit_price=float(prices[i] or 0),
@@ -202,6 +212,12 @@ def edit(purchase_id):
             )
             line.recalculate()
             db.session.add(line)
+            
+            # Update selling price of the product if provided
+            if p_id and i < len(selling_prices) and selling_prices[i]:
+                prod = Product.query.get(p_id)
+                if prod:
+                    prod.unit_price = float(selling_prices[i])
 
         db.session.flush()
         purchase.recalculate()

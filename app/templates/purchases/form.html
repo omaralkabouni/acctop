@@ -3,13 +3,13 @@
 <script>
 window.__products = [
   {% for p in products %}
-  {id: {{ p.id }}, name: {{ p.name | tojson }}, name_ar: {{ (p.name_ar or p.name) | tojson }}, unit_price: {{ p.cost_price | float }}},
+  {id: {{ p.id }}, name: {{ p.name | tojson }}, name_ar: {{ (p.name_ar or p.name) | tojson }}, unit_price: {{ p.cost_price | float }}, selling_price: {{ p.unit_price | float }}},
   {% endfor %}
 ];
 document.addEventListener('DOMContentLoaded', () => {
   {% if purchase and purchase.lines.count() > 0 %}
     {% for line in purchase.lines %}
-    InvoiceForm.addLine({{ line.product_id or 'null' }}, {{ line.description | tojson }}, {{ line.unit_price | float }}, {{ line.qty | float }}, {{ line.discount_pct | float }});
+    InvoiceForm.addLine({{ line.product_id or 'null' }}, {{ line.description | tojson }}, {{ line.unit_price | float }}, {{ line.qty | float }}, {{ line.discount_pct | float }}, {{ line.product.unit_price | float if line.product else 0 }});
     {% endfor %}
   {% else %}
     InvoiceForm.addLine();
@@ -99,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <th>الوصف</th>
             <th style="width:90px">الكمية</th>
             <th style="width:120px">سعر التكلفة</th>
+            <th class="col-selling" style="width:120px">سعر البيع</th>
             <th style="width:80px">الخصم %</th>
             <th style="width:110px">الإجمالي</th>
             <th style="width:40px"></th>

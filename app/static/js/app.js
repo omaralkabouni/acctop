@@ -77,21 +77,35 @@ document.addEventListener('DOMContentLoaded', () => {
 const InvoiceForm = {
   lineCount: 0,
 
-  addLine(productId = '', productName = '', unitPrice = 0, qty = 1, discount = 0) {
+  addLine(productId = '', productName = '', unitPrice = 0, qty = 1, discount = 0, sellingPrice = 0) {
     const tbody = document.getElementById('invoice-lines-body');
     if (!tbody) return;
     const idx = this.lineCount++;
+    
+    // Check if we should show selling price (usually only for purchases)
+    const showSelling = !!document.querySelector('.invoice-lines-table th.col-selling');
+    let sellingHtml = '';
+    if (showSelling) {
+      // Find the selling price if not provided
+      if (!sellingPrice && productId) {
+        const p = window.__products.find(p => p.id == productId);
+        if (p) sellingPrice = p.selling_price || 0;
+      }
+      sellingHtml = `<td><input type="number" name="selling_price[]" class="form-control num" value="${sellingPrice}" min="0" step="any" style="width:100px" placeholder="سعر البيع"/></td>`;
+    }
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>
         <select name="product_id[]" class="form-control searchable-product-select" style="min-width:140px">
           <option value="">-- اختر منتجاً --</option>
-          ${window.__products?.map(p => `<option value="${p.id}" data-price="${p.unit_price}" ${p.id==productId?'selected':''}>${p.name_ar||p.name}</option>`).join('')||''}
+          ${window.__products?.map(p => `<option value="${p.id}" data-price="${p.unit_price}" data-selling="${p.selling_price||0}" ${p.id==productId?'selected':''}>${p.name_ar||p.name}</option>`).join('')||''}
         </select>
       </td>
       <td><input type="text" name="description[]" class="form-control" value="${productName}" placeholder="الوصف" required style="min-width:160px"/></td>
       <td><input type="number" name="qty[]" class="form-control num" value="${qty}" min="0.001" step="any" onchange="InvoiceForm.calcLine(${idx})" style="width:80px"/></td>
       <td><input type="number" name="unit_price[]" id="price_${idx}" class="form-control num" value="${unitPrice}" min="0" step="any" onchange="InvoiceForm.calcLine(${idx})" style="width:110px"/></td>
+      ${sellingHtml}
       <td><input type="number" name="line_discount[]" class="form-control num" value="${discount}" min="0" max="100" step="any" onchange="InvoiceForm.calcLine(${idx})" style="width:70px"/></td>
       <td class="num line-total" id="linetotal_${idx}">0.00</td>
       <td><button type="button" class="btn btn-icon" style="color:var(--error)" onclick="this.closest('tr').remove();InvoiceForm.updateTotals()">
@@ -174,6 +188,9 @@ const InvoiceForm = {
       row.querySelector('input[name="description[]"]').value = product.name_ar || product.name;
       const priceInput = document.getElementById(`price_${idx}`);
       if (priceInput) priceInput.value = parseFloat(product.unit_price.toFixed(2));
+      
+      const sellingInput = row.querySelector('input[name="selling_price[]"]');
+      if (sellingInput) sellingInput.value = parseFloat((product.selling_price || product.unit_price || 0).toFixed(2));
     }
     this.calcLine(idx);
   },
