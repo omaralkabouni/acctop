@@ -9,7 +9,13 @@ from ...models.account import Account
 from ...utils.decorators import permission_required, log_action
 
 
-@inventory_bp.route('/')
+@inventory_bp.route('/migrate-db-emergency')
+@login_required
+def migrate_db():
+    if current_user.role.name != 'admin':
+        return "Unauthorized", 403
+    db.create_all()
+    return "تم تحديث جداول قاعدة البيانات بنجاح (Database updated)"
 @inventory_bp.route('/products')
 @login_required
 def index():
