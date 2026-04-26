@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 
 from . import inventory_bp
 from ...extensions import db
-from ...models.product import Product, InventoryMovement
+from ...models.product import Product, InventoryMovement, ProductImage
 from ...models.account import Account
 from ...utils.decorators import permission_required, log_action
 
