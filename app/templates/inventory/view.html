@@ -16,15 +16,31 @@
 
 <div style="display:grid;grid-template-columns:1fr 2fr;gap:24px">
   <div class="card">
-    <div class="card-body" style="text-align:center">
-      {% if product.image %}
-        <img src="{{ url_for('static', filename='uploads/products/' + product.image) }}" alt="{{ product.name }}" style="max-width:100%; border-radius:var(--radius); margin-bottom:16px; box-shadow:var(--shadow-md)">
-        <br>
-        <a href="{{ url_for('static', filename='uploads/products/' + product.image) }}" download="{{ product.name }}.jpg" class="btn btn-primary" style="width:100%">
-          <span class="material-symbols-outlined">download</span> تحميل الصورة
-        </a>
+    <div class="card-body">
+      {% if product.images.count() > 0 %}
+        <div id="product-gallery">
+          {% for img in product.images %}
+          <div style="margin-bottom:20px; text-align:center">
+            <img src="{{ url_for('static', filename='uploads/products/' + img.image) }}" alt="{{ product.name }}" style="max-width:100%; border-radius:var(--radius); box-shadow:var(--shadow-md)">
+            <div style="margin-top:8px">
+              <a href="{{ url_for('static', filename='uploads/products/' + img.image) }}" download="{{ product.name }}_{{ loop.index }}.jpg" class="btn btn-ghost btn-sm">
+                <span class="material-symbols-outlined">download</span> تحميل هذه الصورة
+              </a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% elif product.image %}
+        <div style="text-align:center">
+          <img src="{{ url_for('static', filename='uploads/products/' + product.image) }}" alt="{{ product.name }}" style="max-width:100%; border-radius:var(--radius); box-shadow:var(--shadow-md)">
+          <div style="margin-top:8px">
+            <a href="{{ url_for('static', filename='uploads/products/' + product.image) }}" download="{{ product.name }}.jpg" class="btn btn-ghost btn-sm">
+              <span class="material-symbols-outlined">download</span> تحميل الصورة
+            </a>
+          </div>
+        </div>
       {% else %}
-        <div style="padding:40px; background:var(--surface-low); border-radius:var(--radius); color:var(--outline)">
+        <div style="padding:40px; background:var(--surface-low); border-radius:var(--radius); color:var(--outline); text-align:center">
           <span class="material-symbols-outlined" style="font-size:64px">image</span>
           <p>لا توجد صورة للمنتج</p>
         </div>

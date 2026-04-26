@@ -24,6 +24,7 @@ class Product(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     movements = db.relationship('InventoryMovement', backref='product', lazy='dynamic')
+    images = db.relationship('ProductImage', backref='product', lazy='dynamic', cascade='all, delete-orphan')
 
     @property
     def is_low_stock(self):
@@ -35,6 +36,19 @@ class Product(db.Model):
 
     def __repr__(self):
         return f'<Product {self.sku} {self.name}>'
+
+
+class ProductImage(db.Model):
+    __tablename__ = 'product_images'
+
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    image = db.Column(db.String(300), nullable=False)
+    is_primary = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<ProductImage {self.image} for product={self.product_id}>'
 
 
 class InventoryMovement(db.Model):

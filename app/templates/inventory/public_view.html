@@ -19,11 +19,21 @@
 <body>
 
 <div class="public-card">
-  <div class="public-img">
-    {% if product.image %}
-      <img src="{{ url_for('static', filename='uploads/products/' + product.image) }}" alt="{{ product.name }}">
+  <div class="public-img" style="height:auto; display:block">
+    {% if product.images.count() > 0 %}
+      {% for img in product.images %}
+      <div style="padding:10px; text-align:center; border-bottom:1px solid var(--outline-var)">
+        <img src="{{ url_for('static', filename='uploads/products/' + img.image) }}" alt="{{ product.name }}" style="max-width:100%; border-radius:10px">
+      </div>
+      {% endfor %}
+    {% elif product.image %}
+      <div style="padding:10px; text-align:center">
+        <img src="{{ url_for('static', filename='uploads/products/' + product.image) }}" alt="{{ product.name }}" style="max-width:100%; border-radius:10px">
+      </div>
     {% else %}
-      <span class="material-symbols-outlined" style="font-size:80px; color:var(--outline-var)">image</span>
+      <div style="height:350px; display:flex; align-items:center; justify-content:center">
+        <span class="material-symbols-outlined" style="font-size:80px; color:var(--outline-var)">image</span>
+      </div>
     {% endif %}
   </div>
   <div class="public-content">

@@ -41,20 +41,10 @@ import os
 def create_product():
     accounts = Account.query.filter_by(type='asset', is_active=True).all()
     if request.method == 'POST':
-        # Handle Image Upload
-        image_file = request.files.get('image')
-        image_filename = None
-        if image_file and image_file.filename:
-            image_filename = secure_filename(image_file.filename)
-            # Add timestamp to avoid collisions
-            from datetime import datetime
-            image_filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{image_filename}"
-            upload_dir = os.path.join(current_app.static_folder, 'uploads', 'products')
-            if not os.path.exists(upload_dir):
-                os.makedirs(upload_dir, exist_ok=True)
-            upload_path = os.path.join(upload_dir, image_filename)
-            image_file.save(upload_path)
-
+        # Handle Multiple Image Uploads
+        image_files = request.files.getlist('images')
+        primary_image = None
+        
         product = Product(
             sku=request.form.get('sku', '').strip() or None,
             name=request.form.get('name', '').strip(),
@@ -67,10 +57,29 @@ def create_product():
             min_stock=float(request.form.get('min_stock', 0)),
             unit=request.form.get('unit', 'قطعة'),
             account_id=request.form.get('account_id', type=int) if request.form.get('account_id') else None,
-            image=image_filename
         )
         db.session.add(product)
         db.session.flush()
+
+        from werkzeug.utils import secure_filename
+        import os
+        from datetime import datetime
+
+        for i, img in enumerate(image_files):
+            if img and img.filename:
+                filename = secure_filename(img.filename)
+                filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{i}_{filename}"
+                upload_dir = os.path.join(current_app.static_folder, 'uploads', 'products')
+                if not os.path.exists(upload_dir): os.makedirs(upload_dir, exist_ok=True)
+                img.save(os.path.join(upload_dir, filename))
+                
+                # First image is primary
+                if i == 0:
+                    product.image = filename
+                
+                new_img = ProductImage(product_id=product.id, image=filename, is_primary=(i==0))
+                db.session.add(new_img)
+
 
         if float(product.stock_qty) > 0:
             mov = InventoryMovement(
@@ -97,18 +106,37 @@ def edit_product(product_id):
     product = Product.query.get_or_404(product_id)
     accounts = Account.query.filter_by(type='asset', is_active=True).all()
     if request.method == 'POST':
-        # Handle Image Upload
-        image_file = request.files.get('image')
-        if image_file and image_file.filename:
-            image_filename = secure_filename(image_file.filename)
-            from datetime import datetime
-            image_filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{image_filename}"
-            upload_dir = os.path.join(current_app.static_folder, 'uploads', 'products')
-            if not os.path.exists(upload_dir):
-                os.makedirs(upload_dir, exist_ok=True)
-            upload_path = os.path.join(upload_dir, image_filename)
-            image_file.save(upload_path)
-            product.image = image_filename
+        # Handle Image Deletion
+        deleted_image_ids = request.form.getlist('delete_images[]')
+        for img_id in deleted_image_ids:
+            img_obj = ProductImage.query.get(int(img_id))
+            if img_obj:
+                # If it was the primary image of the product model, clear it
+                if product.image == img_obj.image:
+                    product.image = None
+                db.session.delete(img_obj)
+
+        # Handle New Image Uploads
+        image_files = request.files.getlist('images')
+        from werkzeug.utils import secure_filename
+        import os
+        from datetime import datetime
+
+        for i, img in enumerate(image_files):
+            if img and img.filename:
+                filename = secure_filename(img.filename)
+                filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{i}_{filename}"
+                upload_dir = os.path.join(current_app.static_folder, 'uploads', 'products')
+                if not os.path.exists(upload_dir): os.makedirs(upload_dir, exist_ok=True)
+                img.save(os.path.join(upload_dir, filename))
+                
+                # Set as primary if product has no primary image
+                if not product.image:
+                    product.image = filename
+                
+                new_img = ProductImage(product_id=product.id, image=filename, is_primary=False)
+                db.session.add(new_img)
+
 
         old_vals = {'name': product.name, 'stock_qty': float(product.stock_qty)}
         product.name = request.form.get('name', product.name).strip()
