@@ -74,4 +74,8 @@ def create_app(config_name='development'):
             sys_settings=sys_settings
         )
 
+    # Automatic DB update
+    with app.app_context():
+        db.create_all()
+
     return app
