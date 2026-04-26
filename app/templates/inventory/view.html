@@ -6,7 +6,7 @@
     <p class="text-muted">SKU: {{ product.sku or '—' }} | الفئة: {{ product.category or 'عام' }}</p>
   </div>
   <div class="flex gap-2">
-    <button class="btn btn-ghost" onclick="copyPublicLink('{{ url_for('inventory.public_product', product_id=product.id, _external=True) }}')">
+    <button class="btn btn-ghost" onclick="copyPublicLink('{{ url_for('inventory.public_product', product_id=product.id) }}')">
       <span class="material-symbols-outlined">share</span> مشاركة
     </button>
     <a href="{{ url_for('inventory.edit_product', product_id=product.id) }}" class="btn btn-secondary">تعديل</a>
