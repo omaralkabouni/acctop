@@ -113,12 +113,15 @@ def edit_product(product_id):
         old_vals = {'name': product.name, 'stock_qty': float(product.stock_qty)}
         product.name = request.form.get('name', product.name).strip()
         product.name_ar = request.form.get('name_ar', '').strip() or None
+        product.sku = request.form.get('sku', product.sku).strip() or None
         product.category = request.form.get('category', product.category).strip()
+        product.description = request.form.get('description', '').strip()
         product.unit_price = float(request.form.get('unit_price', product.unit_price))
         product.cost_price = float(request.form.get('cost_price', product.cost_price))
         product.min_stock = float(request.form.get('min_stock', product.min_stock))
         product.unit = request.form.get('unit', product.unit)
         product.is_active = bool(request.form.get('is_active'))
+        product.account_id = request.form.get('account_id', type=int) if request.form.get('account_id') else product.account_id
         db.session.commit()
         log_action(current_user.id, 'update', 'Product', product.id, old_values=old_vals,
                    new_values={'name': product.name, 'unit_price': float(product.unit_price)})
@@ -163,6 +166,21 @@ def adjust_stock(product_id):
         return redirect(url_for('inventory.product_movements', product_id=product_id))
 
     return render_template('inventory/adjust_stock.html', title='تسوية المخزون', product=product)
+
+
+@inventory_bp.route('/products/<int:product_id>')
+@login_required
+def view_product(product_id):
+    product = Product.query.get_or_404(product_id)
+    return render_template('inventory/view.html', title=product.name, product=product)
+
+
+@inventory_bp.route('/p/<int:product_id>')
+def public_product(product_id):
+    product = Product.query.get_or_404(product_id)
+    if not product.is_active:
+        return "المنتج غير متوفر حالياً", 404
+    return render_template('inventory/public_view.html', title=product.name, product=product)
 
 
 @inventory_bp.route('/products/<int:product_id>/movements')

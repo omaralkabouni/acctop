@@ -32,7 +32,9 @@
               <div style="width:36px;height:36px;background:var(--surface-low);border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--outline);font-size:16px"><span class="material-symbols-outlined" style="font-size:18px">image</span></div>
               {% endif %}
               <div>
-                <strong>{{ p.name_ar or p.name }}</strong>
+                <a href="{{ url_for('inventory.view_product', product_id=p.id) }}" style="color:inherit; text-decoration:none; font-weight:700">
+                  {{ p.name_ar or p.name }}
+                </a>
                 {% if p.is_low_stock %}<span class="badge badge-red" style="margin-right:6px;font-size:10px">منخفض</span>{% endif %}
               </div>
             </div>
@@ -44,10 +46,19 @@
           <td class="num hide-mobile">{{ p.unit_price | currency }}</td>
           <td class="num" style="font-weight:700">{{ p.stock_value | currency }}</td>
           <td>
-            <div class="flex gap-2">
-              <a href="{{ url_for('inventory.product_movements', product_id=p.id) }}" class="btn btn-sm btn-secondary">الحركة</a>
-              <a href="{{ url_for('inventory.adjust_stock', product_id=p.id) }}" class="btn btn-sm btn-secondary">تسوية</a>
-              <a href="{{ url_for('inventory.edit_product', product_id=p.id) }}" class="btn btn-sm btn-ghost">تعديل</a>
+            <div class="flex gap-1">
+              <a href="{{ url_for('inventory.view_product', product_id=p.id) }}" class="btn btn-icon" title="عرض">
+                <span class="material-symbols-outlined" style="font-size:18px">visibility</span>
+              </a>
+              <a href="{{ url_for('inventory.product_movements', product_id=p.id) }}" class="btn btn-icon" title="سجل الحركة">
+                <span class="material-symbols-outlined" style="font-size:18px">history</span>
+              </a>
+              <a href="{{ url_for('inventory.adjust_stock', product_id=p.id) }}" class="btn btn-icon" title="تسوية المخزون">
+                <span class="material-symbols-outlined" style="font-size:18px">inventory_2</span>
+              </a>
+              <a href="{{ url_for('inventory.edit_product', product_id=p.id) }}" class="btn btn-icon" title="تعديل">
+                <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+              </a>
             </div>
           </td>
         </tr>

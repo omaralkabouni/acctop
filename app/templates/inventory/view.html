@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-header flex-between">
+  <div>
+    <h2>{{ product.name_ar or product.name }}</h2>
+    <p class="text-muted">SKU: {{ product.sku or '—' }} | الفئة: {{ product.category or 'عام' }}</p>
+  </div>
+  <div class="flex gap-2">
+    <button class="btn btn-ghost" onclick="copyPublicLink('{{ url_for('inventory.public_product', product_id=product.id, _external=True) }}')">
+      <span class="material-symbols-outlined">share</span> مشاركة
+    </button>
+    <a href="{{ url_for('inventory.edit_product', product_id=product.id) }}" class="btn btn-secondary">تعديل</a>
+    <a href="{{ url_for('inventory.index') }}" class="btn btn-ghost">العودة</a>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 2fr;gap:24px">
+  <div class="card">
+    <div class="card-body" style="text-align:center">
+      {% if product.image %}
+        <img src="{{ url_for('static', filename='uploads/products/' + product.image) }}" alt="{{ product.name }}" style="max-width:100%; border-radius:var(--radius); margin-bottom:16px; box-shadow:var(--shadow-md)">
+        <br>
+        <a href="{{ url_for('static', filename='uploads/products/' + product.image) }}" download="{{ product.name }}.jpg" class="btn btn-primary" style="width:100%">
+          <span class="material-symbols-outlined">download</span> تحميل الصورة
+        </a>
+      {% else %}
+        <div style="padding:40px; background:var(--surface-low); border-radius:var(--radius); color:var(--outline)">
+          <span class="material-symbols-outlined" style="font-size:64px">image</span>
+          <p>لا توجد صورة للمنتج</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h4>تفاصيل المنتج</h4></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div>
+          <p class="kpi-label">الاسم (عربي)</p>
+          <p style="font-weight:700">{{ product.name_ar or '—' }}</p>
+          
+          <p class="kpi-label" style="margin-top:16px">الاسم (إنجليزي)</p>
+          <p>{{ product.name }}</p>
+          
+          <p class="kpi-label" style="margin-top:16px">الوحدة</p>
+          <p>{{ product.unit }}</p>
+        </div>
+        <div>
+          <p class="kpi-label">سعر البيع</p>
+          <p class="num text-primary" style="font-size:20px; font-weight:700">{{ product.unit_price | currency }}</p>
+          
+          <p class="kpi-label" style="margin-top:16px">سعر التكلفة</p>
+          <p class="num">{{ product.cost_price | currency }}</p>
+          
+          <p class="kpi-label" style="margin-top:16px">المخزون الحالي</p>
+          <p class="num {{ 'text-danger' if product.is_low_stock else 'text-success' }}" style="font-weight:700">{{ product.stock_qty }} {{ product.unit }}</p>
+        </div>
+      </div>
+      
+      <hr style="margin:20px 0; border:none; border-top:1px solid var(--outline-var)">
+      
+      <div>
+        <p class="kpi-label">الوصف</p>
+        <p>{{ product.description or 'لا يوجد وصف' }}</p>
+      </div>
+    </div>
+    <div class="card-footer">
+        <a href="{{ url_for('inventory.product_movements', product_id=product.id) }}" class="btn btn-ghost">
+            <span class="material-symbols-outlined">history</span> سجل الحركة المخزنية
+        </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -274,3 +274,11 @@ function createBarChart(canvasId, labels, data, color = '#10b981') {
     }
   });
 }
+
+function copyPublicLink(url) {
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('تم نسخ الرابط العام للمنتج بنجاح', 'success');
+  }).catch(err => {
+    showToast('فشل نسخ الرابط', 'error');
+  });
+}
